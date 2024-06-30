@@ -118,7 +118,6 @@ TabPhone.Apps = {}
 TabPhone.Apps["mainmenu"] = {
     Name = "Main Menu",
     Hidden = true,
-    RightText = "QUIT",
     Icon = Material("fesiug/TabPhone/contact.png"),
     SortOrder = 0,
     Func_Enter = function() end,
@@ -139,7 +138,8 @@ TabPhone.Apps["mainmenu"] = {
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
-        local Sortedapps = GetApps()
+		TabMemory.RightText = "QUIT"
+		local Sortedapps = GetApps()
 
         for i, prev in ipairs(Sortedapps) do
             local v = TabPhone.Apps[prev]
@@ -204,7 +204,6 @@ TabPhone.Apps["messages"] = {
         draw.SimpleText("Alice", "TabPhone24", 8+48+8 + 4, 8 + 48 + 4, COL_FG )
 
 		do
-			local y = i
 			surface.SetFont("TabPhone24")
 			local ts = "'jeff the kill' you"
 			local tsn = surface.GetTextSize(ts)
@@ -214,7 +213,6 @@ TabPhone.Apps["messages"] = {
 		end
 
 		do
-			local y = i
 			surface.SetFont("TabPhone24")
 			local ts = "'jeff the kill' you"
 			local tsn = surface.GetTextSize(ts)
@@ -259,7 +257,7 @@ TabPhone.Apps["calendar"] = {
 	end,
 }
 
-TabPhone.Apps["Shopping"] = {
+TabPhone.Apps["shopping"] = {
     Name = "Shopping",
     Icon = Material("fesiug/TabPhone/shopper.png"),
     SortOrder = -1006,
@@ -288,6 +286,8 @@ TabPhone.Apps["call"] = {
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
+		TabMemory.LeftText = "ANSWER"
+		TabMemory.RightText = "DECLINE"
         surface.SetDrawColor(COL_FG)
         surface.DrawRect(0, 0, 512, 512)
 		
@@ -405,6 +405,10 @@ TabPhone.Apps["settings"] = {
 
             if sel then
                 surface.DrawRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52)
+				if opt.type == "int" then
+					TabMemory.LeftText = "NEXT"
+					TabMemory.RightText = "PREVIOUS"
+				end
             else
                 surface.DrawOutlinedRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52, 4)
             end
@@ -437,7 +441,6 @@ TabPhone.Apps["camera"] = {
     Name = "Camera",
     Icon = Material("fesiug/TabPhone/camera.png"),
     SortOrder = -1020,
-    LeftText = "TAKE PHOTO",
     Func_Enter = function()
 		TabMemory.CameraZoom = 1
 	end,
@@ -599,7 +602,8 @@ TabPhone.Apps["camera"] = {
         end
     end,
     Func_Draw = function(w, h)
-        surface.SetDrawColor(COL_FG)
+		TabMemory.LeftText = "TAKE PHOTO"
+		surface.SetDrawColor(COL_FG)
         surface.DrawRect(0, 0, 512, 512)
 
         surface.SetMaterial(camMat)
@@ -675,7 +679,11 @@ TabPhone.Apps["gallery"] = {
         TabPhone.EnterApp("gallery_deleter")
 	end,
     Func_Draw = function(w, h)
-        for i, k in ipairs(cachedgalleryimages) do
+		TabMemory.LeftText = ""
+		if #cachedgalleryimages >= 0 then
+			draw.SimpleText( "NO PHOTOS", "TabPhone32", w/2, (512-48)/2 - (40/2), COL_BG, TEXT_ALIGN_CENTER )
+		end
+		for i, k in ipairs(cachedgalleryimages) do
             local xslot = (i - 1) % 3
             local yslot = math.ceil(i / 3)
 
@@ -689,7 +697,8 @@ TabPhone.Apps["gallery"] = {
             if sel then
                 surface.SetDrawColor(0, 0, 0)
                 surface.DrawRect(x - 5, y - 5, sw + 10, sh + 10)
-            end
+				TabMemory.LeftText = "VIEW"
+			end
 
             surface.SetMaterial(k.thumbmat)
             surface.SetDrawColor(255, 255, 255)
@@ -701,7 +710,6 @@ TabPhone.Apps["gallery"] = {
 TabPhone.Apps["gallery_viewer"] = {
     Name = "Image Viewer",
     Hidden = true,
-    LeftText = "(TEMP)MAKE PFP",
     Func_Enter = function() end,
     Func_Primary = function()
         local image = cachedgalleryimages[TabMemory.GallerySelected]
@@ -718,7 +726,8 @@ TabPhone.Apps["gallery_viewer"] = {
         TabPhone.Scroll(level, "GallerySelected", #cachedgalleryimages)
     end,
     Func_Draw = function(w, h)
-        local image = cachedgalleryimages[TabMemory.GallerySelected]
+		TabMemory.LeftText = "(TEMP)MAKE PFP"
+		local image = cachedgalleryimages[TabMemory.GallerySelected]
 
         if not image then return end
         if not image.material then image.material = Material("data/arcrp_photos/" .. image.filename) end
@@ -733,7 +742,6 @@ TabPhone.Apps["gallery_viewer"] = {
 TabPhone.Apps["gallery_deleter"] = {
     Name = "Image Deleter",
     Hidden = true,
-    LeftText = "CONFIRM",
     Func_Enter = function()
         LocalPlayer():EmitSound("fesiug/tabphone/delete.ogg", 70, 100, 0.5, CHAN_STATIC)
 	end,
@@ -750,7 +758,9 @@ TabPhone.Apps["gallery_deleter"] = {
         TabPhone.EnterApp("gallery")
     end,
     Func_Draw = function(w, h)
-        surface.SetDrawColor(COL_BG)
+		TabMemory.LeftText = "CONFIRM"
+		TabMemory.RightText = "CANCEL"
+		surface.SetDrawColor(COL_BG)
         surface.DrawRect(0, 0, 512, 512 )
 		
 		draw.SimpleText("DELETE??", "TabPhone32", w/2, 64, COL_FG, TEXT_ALIGN_CENTER)

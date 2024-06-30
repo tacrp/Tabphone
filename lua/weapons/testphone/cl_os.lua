@@ -53,6 +53,9 @@ function TabPhone.Scroll(level, var, total)
 end
 
 function SWEP:PreDrawViewModel(vm, wep, ply)
+	TabMemory.LeftText = "SELECT"
+	TabMemory.RightText = "BACK"
+
     render.PushRenderTarget(tex)
     cam.Start2D()
     surface.SetDrawColor(COL_FG)
@@ -96,8 +99,8 @@ function SWEP:PreDrawViewModel(vm, wep, ply)
     surface.SetDrawColor(COL_BG)
     surface.DrawRect(0, 512 - 32 - 8, 512, 32 + 8)
     --surface.DrawRect( 0, 512-4, 512, 4 )
-    draw.SimpleText(activeapp.LeftText or "SELECT", "TabPhone28", 4, 512 - 32 - 4, COL_FG)
-    draw.SimpleText(activeapp.RightText or "BACK", "TabPhone28", BARRIER_FLIPPHONE - 4, 512 - 32 - 4, COL_FG, TEXT_ALIGN_RIGHT)
+    draw.SimpleText(TabMemory.LeftText or "SELECT", "TabPhone28", 4, 512 - 32 - 4, COL_FG)
+    draw.SimpleText(TabMemory.RightText or "BACK", "TabPhone28", BARRIER_FLIPPHONE - 4, 512 - 32 - 4, COL_FG, TEXT_ALIGN_RIGHT)
     cam.End2D()
     render.PopRenderTarget()
     render.MaterialOverrideByIndex(1, myMat)
