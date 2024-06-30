@@ -119,6 +119,7 @@ TabPhone.Apps = {}
 TabPhone.Apps["mainmenu"] = {
     Name = "Main Menu",
     Hidden = true,
+    RightText = "QUIT",
     Icon = Material("fesiug/TabPhone/contact.png"),
     SortOrder = 0,
     Func_Enter = function() end,
@@ -217,6 +218,19 @@ TabPhone.Apps["jobs"] = {
 TabPhone.Apps["calendar"] = {
     Name = "Calendar",
     Icon = Material("fesiug/TabPhone/calendar.png"),
+    SortOrder = -1006,
+    Func_Enter = function() end,
+    Func_Primary = function() end,
+    Func_Secondary = function()
+        TabPhone.EnterApp("mainmenu")
+    end,
+    Func_Reload = function() end,
+    Func_Draw = function(w, h) end,
+}
+
+TabPhone.Apps["Shopping"] = {
+    Name = "Shopping",
+    Icon = Material("fesiug/TabPhone/shopper.png"),
     SortOrder = -1006,
     Func_Enter = function() end,
     Func_Primary = function() end,
@@ -380,6 +394,7 @@ TabPhone.Apps["camera"] = {
     Func_Enter = function() end,
     Func_Primary = function()
         if TabMemory.NextPhotoTime > CurTime() then return end
+		local vangle = LocalPlayer():EyeAngles()
 
         if TabMemory.Flash then
             local dlight = DynamicLight( LocalPlayer():EntIndex() )
@@ -406,7 +421,7 @@ TabPhone.Apps["camera"] = {
                 w = 512,
                 h = 512,
                 aspect = 1,
-                angles = EyeAngles(),
+                angles = vangle,
                 origin = EyePos(),
                 drawviewmodel = false,
                 fov = 50,
@@ -447,7 +462,7 @@ TabPhone.Apps["camera"] = {
                 w = 64,
                 h = 64,
                 aspect = 1,
-                angles = EyeAngles(),
+                angles = vangle,
                 origin = EyePos(),
                 drawviewmodel = false,
                 fov = 50,
@@ -500,7 +515,7 @@ TabPhone.Apps["camera"] = {
                 w = 512,
                 h = 512,
                 aspect = 1,
-                angles = EyeAngles(),
+                angles = vangle,
                 origin = EyePos(),
                 drawviewmodel = false,
                 fov = 50,
@@ -533,11 +548,12 @@ TabPhone.Apps["camera"] = {
         surface.DrawRect(0, 0, 512, 512)
 
         surface.SetMaterial(camMat)
-        surface.SetDrawColor(Color(255, 255, 255))
-        surface.DrawTexturedRect(0, 0, w, h)
+        surface.SetDrawColor(255, 255, 255)
+		local realbound = (512-48-40)
+        surface.DrawTexturedRect(w/2 - realbound/2, h/2 - realbound/2, realbound, realbound)
 
         if TabMemory.NextPhotoTime - 0.9 > CurTime() then
-            surface.SetDrawColor(Color(0, 0, 0))
+            surface.SetDrawColor(0, 0, 0)
             surface.DrawRect(0, 0, w, h)
         end
 
@@ -641,8 +657,9 @@ TabPhone.Apps["gallery_viewer"] = {
         if not image then return end
         if not image.material then image.material = Material("data/arcrp_photos/" .. image.filename) end
 
+		local available = 512 - 48 - 40
         surface.SetMaterial(image.material)
         surface.SetDrawColor(255, 255, 255)
-        surface.DrawTexturedRect(0, 0, 512, 512)
+        surface.DrawTexturedRect(BARRIER_FLIPPHONE/2 - available/2, 512/2 - available/2, available, available)
     end,
 }
