@@ -152,10 +152,10 @@ TabPhone.Apps["mainmenu"] = {
                 surface.DrawOutlinedRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52, 4)
             end
 
-            draw.SimpleText(v.Name, "TabPhone32", 8 + 8 + 8 + 8 + 32, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
+            draw.SimpleText(v.Name, "TabPhone32", 8 + 8 + 8 + 8 + 8 + 32, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
             surface.SetDrawColor(sel and COL_FG or COL_BG)
             surface.SetMaterial(v.Icon)
-            surface.DrawTexturedRect(8 + 8 + 4, ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
+            surface.DrawTexturedRect(8 + 8 + 4 + 4, ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
         end
     end,
 }
@@ -203,12 +203,25 @@ TabPhone.Apps["messages"] = {
 
         draw.SimpleText("Alice", "TabPhone24", 8+48+8 + 4, 8 + 48 + 4, COL_FG )
 
-		surface.SetFont("TabPhone24")
-		local ts = "'jeff the kill' you"
-		local tsn = surface.GetTextSize(ts)
-		surface.SetDrawColor( COL_BG )
-		surface.DrawRect( w-8-tsn, 512-40-8-(24+4+4), tsn, 24+4+4 )
-        draw.SimpleText( ts, "TabPhone24", w-8-tsn, 512-40-8-(24+4), COL_FG )
+		do
+			local y = i
+			surface.SetFont("TabPhone24")
+			local ts = "'jeff the kill' you"
+			local tsn = surface.GetTextSize(ts)
+			surface.SetDrawColor( COL_BG )
+			surface.DrawRect( w-8-tsn, 512-40-8-(24+4+4), tsn, 24+4+4 )
+			draw.SimpleText( ts, "TabPhone24", w-8-tsn, 512-40-8-(24+4), COL_FG )
+		end
+
+		do
+			local y = i
+			surface.SetFont("TabPhone24")
+			local ts = "'jeff the kill' you"
+			local tsn = surface.GetTextSize(ts)
+			surface.SetDrawColor( COL_BG )
+			surface.DrawRect( 8, 512-40-8-(24+4+4)-8-(24+4+4), tsn, 24+4+4 )
+			draw.SimpleText( ts, "TabPhone24", 8, 512-40-8-(24+4+4)-8-(24+4), COL_FG )
+		end
     end,
 }
 
@@ -396,18 +409,18 @@ TabPhone.Apps["settings"] = {
                 surface.DrawOutlinedRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52, 4)
             end
 
-            draw.SimpleText(opt.label, "TabPhone32", 8 + 8 + 8 + 8 + 32, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
+            draw.SimpleText(opt.label, "TabPhone32", 8 + 8 + 8 + 8 + 8 + 32, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
 
             if opt.icon then
                 surface.SetDrawColor(sel and COL_FG or COL_BG)
                 surface.SetMaterial(opt.icon)
-                surface.DrawTexturedRect(8 + 8 + 4, ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
+                surface.DrawTexturedRect(8 + 8 + 4 + 4, ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
             end
 
             if opt.type == "int" then
                 local val = opt.convar:GetInt()
 
-                draw.SimpleText(tostring(val), "TabPhone32", w - 14, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
+                draw.SimpleText(tostring(val), "TabPhone32", w - 8 - 8 - 4 - 4, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
             end
         end
     end,
