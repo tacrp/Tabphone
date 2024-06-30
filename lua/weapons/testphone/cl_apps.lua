@@ -11,6 +11,67 @@ local IMAGE_MESSAGE2 = Material("fesiug/TabPhone/message2.png")
 
 local BARRIER_FLIPPHONE = 404
 
+TabPhone.Ringtones = {
+"1.6.ogg",
+"109.mp3",
+"americafyeah.ogg",
+"amongla.ogg",
+"angrybirds.ogg",
+"arab.ogg",
+"Bassmatic.mp3",
+"butterfly.ogg",
+"callring.wav",
+"callring2.wav",
+"callring3_franklin.wav",
+"callring4.wav",
+"callring5.wav",
+"callring6_michael.wav",
+"callring7.wav",
+"callring8_trevor.wav",
+"clockring.wav",
+"Cool Room.mp3",
+"Countryside.mp3",
+"Credit Check.mp3",
+"Dragon Brain.mp3",
+"Drive.mp3",
+"duvet.ogg",
+"edgy.ogg",
+"Fox.mp3",
+"Funk in Time.mp3",
+"Get Down.mp3",
+"gutsberserk.ogg",
+"High Seas.mp3",
+"Hooker.mp3",
+"Into Something.mp3",
+"Katja's Waltz.mp3",
+"Laidback.mp3",
+"Malfunction.mp3",
+"Mine Until Monday.mp3",
+"Pager.mp3",
+"Ringing 1.mp3",
+"Ringing 2.mp3",
+"russian.ogg",
+"Science of Crime.mp3",
+"sfx_sms.ogg",
+"Solo.mp3",
+"Spy.mp3",
+"Standard Ring.mp3",
+"Swing It.mp3",
+"tailsofvalor.ogg",
+"Take the Pain.mp3",
+"Teeker.mp3",
+"Text.mp3",
+"textring.wav",
+"textring2.wav",
+"textring3.wav",
+"textring4.wav",
+"textring5.wav",
+"The One for Me.mp3",
+"themanwhosoldtheworld.ogg",
+"Tonight.mp3",
+"valve.ogg",
+}
+
 local function GetApps()
     local Sortedapps = {}
 
@@ -188,17 +249,114 @@ TabPhone.Apps["call"] = {
     end,
 }
 
+local settings_options = {
+    {
+        label = "Ringtone",
+        icon = Material("fesiug/TabPhone/phone.png"),
+        min = 1,
+        max = function()
+            return #TabPhone.Ringtones
+        end,
+        convar = GetConVar("tabphone_ringtone"),
+        func_change = function(val)
+            if TabMemory.RingToneExample then
+                TabMemory.RingToneExample:Stop()
+            end
+            local sound = "fesiug/tabphone/ringtones/" .. TabPhone.Ringtones[val]
+            TabMemory.RingToneExample = CreateSound(LocalPlayer(), sound)
+            TabMemory.RingToneExample:Play()
+        end,
+        type = "int",
+    },
+    {
+        label = "Back",
+        type = "func",
+        func_change = function()
+            TabPhone.EnterApp("mainmenu")
+        end
+    }
+}
+
+local function changeOption(level)
+    local opt = settings_options[TabMemory.SelectedSetting]
+
+        if not opt then return end
+
+        if opt.type == "int" then
+            local val = opt.convar:GetInt()
+            local min = opt.min
+            local max = opt.max
+
+            if isfunction(min) then
+                min = min()
+            end
+
+            if isfunction(max) then
+                max = max()
+            end
+
+            val = val + level
+
+            if val > max then
+                val = min
+            elseif val < min then
+                val = max
+            end
+
+            opt.convar:SetInt(val)
+
+            if isfunction(opt.func_change) then
+                opt.func_change(val)
+            end
+        else
+            if isfunction(opt.func_change) then
+                opt.func_change(val)
+            end
+        end
+end
+
 TabPhone.Apps["settings"] = {
     Name = "Settings",
     Icon = Material("fesiug/TabPhone/settings.png"),
     SortOrder = -1005,
     Func_Enter = function() end,
-    Func_Primary = function() end,
+    Func_Primary = function()
+        changeOption(1)
+    end,
+    Func_Scroll = function(level)
+        TabPhone.Scroll(level, "SelectedSetting", #settings_options)
+    end,
     Func_Secondary = function()
-        TabPhone.EnterApp("mainmenu")
+        // TabPhone.EnterApp("mainmenu")
+        changeOption(-1)
     end,
     Func_Reload = function() end,
-    Func_Draw = function(w, h) end,
+    Func_Draw = function(w, h)
+        for i, opt in ipairs(settings_options) do
+            local sel = i == TabMemory.SelectedSetting
+            surface.SetDrawColor(COL_BG)
+
+            if sel then
+                surface.DrawRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52)
+            else
+                surface.DrawOutlinedRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52, 4)
+            end
+
+            draw.SimpleText(opt.label, "TabPhone32", 8 + 8 + 8 + 8 + 32, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
+
+            if opt.icon then
+                surface.SetDrawColor(sel and COL_FG or COL_BG)
+                surface.SetMaterial(opt.icon)
+                surface.DrawTexturedRect(8 + 8 + 4, ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
+            end
+
+            if opt.type == "int" then
+                local val = opt.convar:GetInt()
+
+                draw.SimpleText(tostring(val), "TabPhone32", w - 14, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
+            end
+        end
+    end,
 }
 
 local camera_nextdraw = 0

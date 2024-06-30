@@ -24,6 +24,7 @@ local IMAGE_CELL = Material("fesiug/TabPhone/cell2.png")
 TabMemory = TabMemory or {
     ActiveApp = "mainmenu",
     GallerySelected = 1,
+    SelectedSetting = 1,
     Flash = false,
     NextPhotoTime = 0
 }
