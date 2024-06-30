@@ -167,8 +167,7 @@ TabPhone.Apps["contacts"] = {
     Func_Enter = function() end,
     Func_Primary = function() end,
     Func_Secondary = function()
-        TabMemory.ActiveApp = "mainmenu"
-        TabMemory.PageSwitchTime = CurTime()
+		TabPhone.EnterApp("mainmenu")
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
@@ -603,7 +602,7 @@ TabPhone.Apps["camera"] = {
     end,
     Func_Draw = function(w, h)
 		TabMemory.LeftText = "TAKE PHOTO"
-		surface.SetDrawColor(COL_FG)
+		surface.SetDrawColor(COL_BG)
         surface.DrawRect(0, 0, 512, 512)
 
         surface.SetMaterial(camMat)

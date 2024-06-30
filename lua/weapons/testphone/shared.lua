@@ -106,13 +106,16 @@ end
 
 if CLIENT then
 	hook.Add("PlayerBindPress", "TabPhone_Scroll", function(ply, bind, pressed)
-		if ply:GetActiveWeapon():IsValid() and ply:GetActiveWeapon():GetClass() == "testphone" then
+		local w = ply:GetActiveWeapon()
+		if w:IsValid() and w:GetClass() == "testphone" then
 			local block = nil
 
 			if pressed and bind == "invnext" then
 				block = 1
+				-- w:QuickAnim("scdown")
 			elseif pressed and bind == "invprev" then
 				block = -1
+				-- w:QuickAnim("scup")
 			end
 
 			if block then
@@ -121,7 +124,7 @@ if CLIENT then
 
 				if activeapp.Func_Scroll then
 					activeapp.Func_Scroll(block)
-					ply:GetActiveWeapon():Keypress()
+					w:Keypress()
 				end
 				-- It'd be nice to also animate the VM, but this is a clientside hook.
 

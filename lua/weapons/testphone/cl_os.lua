@@ -32,7 +32,7 @@ TabMemory = TabMemory or {
 function TabPhone.EnterApp(name)
     local from = TabMemory.ActiveApp
     TabMemory.ActiveApp = name
-    TabMemory.PageSwitchTime = CurTime()
+    TabMemory.PageSwitchTime = UnPredictedCurTime()
     local active = TabMemory.ActiveApp
     TabPhone.Apps[active].Func_Enter(from)
 end
@@ -63,7 +63,7 @@ function SWEP:PreDrawViewModel(vm, wep, ply)
     local active = TabMemory.ActiveApp
     local activeapp = TabPhone.Apps[active]
     activeapp.Func_Draw(405, 512)
-    local blah = ColorAlpha(COL_FG, math.Clamp(math.Remap(CurTime(), TabMemory.PageSwitchTime or 0, (TabMemory.PageSwitchTime or 0) + 0.2, 1, 0), 0, 1) * 255)
+    local blah = ColorAlpha(COL_FG, math.Clamp(math.Remap(UnPredictedCurTime(), TabMemory.PageSwitchTime or 0, (TabMemory.PageSwitchTime or 0) + 0.2, 1, 0), 0, 1) * 255)
     surface.SetDrawColor(blah)
     surface.DrawRect(0, 48, 512, 512 - 32 - 8)
     surface.SetDrawColor(COL_BG)
