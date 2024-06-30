@@ -109,6 +109,7 @@ if CLIENT then
 		local w = ply:GetActiveWeapon()
 		if w:IsValid() and w:GetClass() == "testphone" then
 			local block = nil
+			local numb
 
 			if pressed then
 				if bind == "invnext" then
@@ -118,35 +119,25 @@ if CLIENT then
 					block = -1
 					-- w:QuickAnim("scup")
 				elseif bind == "slot1" then
-					TabMemory.YouDial = TabMemory.YouDial .. "1"
-					block = true
+					numb = 1
 				elseif bind == "slot2" then
-					TabMemory.YouDial = TabMemory.YouDial .. "2"
-					block = true
+					numb = 2
 				elseif bind == "slot3" then
-					TabMemory.YouDial = TabMemory.YouDial .. "3"
-					block = true
+					numb = 3
 				elseif bind == "slot4" then
-					TabMemory.YouDial = TabMemory.YouDial .. "4"
-					block = true
+					numb = 4
 				elseif bind == "slot5" then
-					TabMemory.YouDial = TabMemory.YouDial .. "5"
-					block = true
+					numb = 5
 				elseif bind == "slot6" then
-					TabMemory.YouDial = TabMemory.YouDial .. "6"
-					block = true
+					numb = 6
 				elseif bind == "slot7" then
-					TabMemory.YouDial = TabMemory.YouDial .. "7"
-					block = true
+					numb = 7
 				elseif bind == "slot8" then
-					TabMemory.YouDial = TabMemory.YouDial .. "8"
-					block = true
+					numb = 8
 				elseif bind == "slot9" then
-					TabMemory.YouDial = TabMemory.YouDial .. "9"
-					block = true
+					numb = 9
 				elseif bind == "slot0" then
-					TabMemory.YouDial = TabMemory.YouDial .. "0"
-					block = true
+					numb = 0
 				end
 			end
 
@@ -154,14 +145,16 @@ if CLIENT then
 			local activeapp = TabPhone.Apps[active]
 			if block then
 				-- It'd be nice to also animate the VM, but this is a clientside hook.
-				if block == true and active == "dialer" then
+				if activeapp.Func_Scroll then
+					activeapp.Func_Scroll(block)
 					w:Keypress()
 					return true
 				end
-
-				if block != true and activeapp.Func_Scroll then
-					activeapp.Func_Scroll(block)
+			elseif numb then
+				if active == "dialer" then
 					w:Keypress()
+					w:EmitSound("fesiug/TabPhone/dialtone/" .. tostring(numb) .. ".ogg", 70, 100, 0.5, CHAN_STATIC)
+					TabMemory.YouDial = TabMemory.YouDial .. tostring(numb)
 					return true
 				end
 			end
