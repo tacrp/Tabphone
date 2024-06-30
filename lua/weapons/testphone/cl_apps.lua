@@ -417,18 +417,16 @@ TabPhone.Apps["camera"] = {
 
             surface.PlaySound("npc/scanner/scanner_photo1.wav")
 
-			local size, size2 = 512, 512
-			size2 = size * TabMemory.CameraZoom
             local rt = {
-                x = size/2 - ((size2-size)/2),
-                y = size/2 - ((size2-size)/2),
-                w = size2,
-                h = size2,
+                x = 0,
+                y = 0,
+                w = 512,
+                h = 512,
                 aspect = 1,
                 angles = vangle,
                 origin = EyePos(),
                 drawviewmodel = false,
-                fov = 50,
+                fov = 50/TabMemory.CameraZoom,
                 znear = 8
             }
             render.RenderView(rt)
@@ -469,7 +467,7 @@ TabPhone.Apps["camera"] = {
                 angles = vangle,
                 origin = EyePos(),
                 drawviewmodel = false,
-                fov = 50,
+                fov = 50/TabMemory.CameraZoom,
                 znear = 8
             }
             render.PushRenderTarget(thumbtex, 0, 0, 64, 64)
