@@ -62,6 +62,15 @@ if CLIENT then
 	Tabphone = {}
 	TabMemory = TabMemory or { ActiveApp = "mainmenu" }
 
+	local function EnterApp(name)
+		local from = TabMemory.ActiveApp
+
+		TabMemory.ActiveApp = name
+		TabMemory.PageSwitchTime = CurTime()
+		
+		local active = TabMemory.ActiveApp
+		Tabphone.Apps[active].Func_Enter( from )
+	end
 	local function GetApps()
 		local Sortedapps = {}
 		for i, v in pairs( Tabphone.Apps ) do
@@ -109,13 +118,11 @@ if CLIENT then
 		Icon = Material("fesiug/tabphone/contact.png"),
 		SortOrder = 0,
 
-		Func_Think = function()
+		Func_Enter = function()
 		end,
 		Func_Primary = function()
 			local Sortedapps = GetApps()
-
-			TabMemory.ActiveApp = Sortedapps[TabMemory.Selected]
-			TabMemory.PageSwitchTime = CurTime()
+			EnterApp( Sortedapps[TabMemory.Selected] )
 		end,
 		Func_Secondary = function()
 			local p = LocalPlayer()
@@ -163,7 +170,7 @@ if CLIENT then
 		Icon = Material("fesiug/tabphone/contact.png"),
 		SortOrder = -1009,
 
-		Func_Think = function()
+		Func_Enter = function()
 		end,
 		Func_Primary = function()
 		end,
@@ -185,13 +192,12 @@ if CLIENT then
 		Icon = Material("fesiug/tabphone/message.png"),
 		SortOrder = -1008,
 
-		Func_Think = function()
+		Func_Enter = function()
 		end,
 		Func_Primary = function()
 		end,
 		Func_Secondary = function()
-			TabMemory.ActiveApp = "mainmenu"
-			TabMemory.PageSwitchTime = CurTime()
+			EnterApp( "mainmenu" )
 		end,
 		Func_Reload = function()
 		end,
@@ -206,12 +212,12 @@ if CLIENT then
 		Icon = Material("fesiug/tabphone/job.png"),
 		SortOrder = -1007,
 
-		Func_Think = function()
+		Func_Enter = function()
 		end,
 		Func_Primary = function()
 		end,
 		Func_Secondary = function()
-			TabMemory.ActiveApp = "mainmenu"
+			EnterApp( "mainmenu" )
 		end,
 		Func_Reload = function()
 		end,
@@ -221,12 +227,83 @@ if CLIENT then
 			end
 		end,
 	}
+	Tabphone.Apps["calendar"] = {
+		Name = "Calendar",
+		Icon = Material("fesiug/tabphone/calendar.png"),
+		SortOrder = -1006,
+
+		Func_Enter = function()
+		end,
+		Func_Primary = function()
+		end,
+		Func_Secondary = function()
+			EnterApp( "mainmenu" )
+		end,
+		Func_Reload = function()
+		end,
+		Func_Draw = function()
+		end,
+	}
+	Tabphone.Apps["call"] = {
+		Name = "Fake Call",
+		Icon = Material("fesiug/tabphone/phone.png"),
+		SortOrder = 0,
+
+		Func_Enter = function()
+			LocalPlayer():EmitSound( "fesiug/tabphone/ringtone_toy.ogg", 100, 100, 1, CHAN_STATIC )
+		end,
+		Func_Primary = function()
+		end,
+		Func_Secondary = function()
+			LocalPlayer():StopSound( "fesiug/tabphone/ringtone_toy.ogg" )
+			EnterApp( "mainmenu" )
+		end,
+		Func_Reload = function()
+		end,
+		Func_Draw = function()
+			surface.SetDrawColor( COL_FG )
+			surface.DrawRect( 0, 0, 512, 512 )
+
+			local jiggy = (math.Round(math.sin( CurTime() * 2 * math.pi )*2, 0)/2) * 16
+			local jiggy2 = (math.Round(math.sin( CurTime() * 28 * math.pi )*2, 0)/2) * 4
+			
+			draw.SimpleText( "INCOMING CALL", "Tabphone32", (BARRIER_FLIPPHONE/2) + jiggy, 64+16 + jiggy2, COL_BG, TEXT_ALIGN_CENTER )
+			draw.SimpleText( "Bank of Siple", "Tabphone32", (BARRIER_FLIPPHONE/2), 64+72, COL_BG, TEXT_ALIGN_CENTER )
+		end,
+	}
+	Tabphone.Apps["settings"] = {
+		Name = "Settings",
+		Icon = Material("fesiug/tabphone/settings.png"),
+		SortOrder = -1005,
+
+		Func_Enter = function()
+		end,
+		Func_Primary = function()
+		end,
+		Func_Secondary = function()
+			EnterApp( "mainmenu" )
+		end,
+		Func_Reload = function()
+		end,
+		Func_Draw = function()
+		end,
+	}
 	
 	function SWEP:PreDrawViewModel( vm, wep, ply )
 		render.PushRenderTarget( tex )
 		cam.Start2D()
+
 			surface.SetDrawColor( COL_FG )
 			surface.DrawRect( 0, 0, 512, 512 )
+
+			local active = TabMemory.ActiveApp
+			Tabphone.Apps[active].Func_Draw()
+			
+			local blah = ColorAlpha( COL_FG, math.Clamp( math.Remap( CurTime(), (TabMemory.PageSwitchTime or 0), (TabMemory.PageSwitchTime or 0)+0.2, 1, 0 ), 0, 1 ) * 255 )
+			surface.SetDrawColor( blah )
+			surface.DrawRect( 0, 48, 512, 512-32-8 )
+
+
 			surface.SetDrawColor( COL_BG )
 			surface.DrawRect( 0, 0, 512, 48 )
 			
@@ -249,19 +326,7 @@ if CLIENT then
 					TimeString = TimeString:Right(-2)
 				end
 			end
-			draw.SimpleText( TimeString, "Tabphone24", BARRIER_FLIPPHONE/2, 10, COL_FG, TEXT_ALIGN_CENTER )
-
-
-			local active = TabMemory.ActiveApp
-			Tabphone.Apps[active].Func_Draw()
-
-
-			
-			local blah = ColorAlpha( COL_FG, math.Clamp( math.Remap( CurTime(), (TabMemory.PageSwitchTime or 0), (TabMemory.PageSwitchTime or 0)+0.2, 1, 0 ), 0, 1 ) * 255 )
-
-			surface.SetDrawColor( blah )
-			surface.DrawRect( 0, 48, 512, 512-32-8 )
-			
+			draw.SimpleText( TimeString, "Tabphone24", BARRIER_FLIPPHONE/2, 10, COL_FG, TEXT_ALIGN_CENTER )			
 			
 			surface.SetDrawColor( COL_BG )
 			surface.DrawRect( 0, 512-32-8, 512, 32+8 )
@@ -281,6 +346,7 @@ end
 function SWEP:PrimaryAttack()
 	self:QuickAnim("left")
 	self:Keypress()
+	self:EmitSound( "fesiug/tabphone/yea.ogg", 70, 100, 1, CHAN_STATIC )
 
 	if CLIENT and IsFirstTimePredicted() then
 		local active = TabMemory.ActiveApp
@@ -292,6 +358,7 @@ end
 function SWEP:SecondaryAttack()
 	self:QuickAnim("right")
 	self:Keypress()
+	self:EmitSound( "fesiug/tabphone/nae.ogg", 70, 100, 1, CHAN_STATIC )
 
 	if CLIENT and IsFirstTimePredicted() then
 		local active = TabMemory.ActiveApp
