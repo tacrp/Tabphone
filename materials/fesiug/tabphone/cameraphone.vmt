@@ -1,6 +1,6 @@
 VertexLitGeneric
 {
-	$basetexture	"fesiug/tabphone/cameraphone"
+	$basetexture	"fesiug/TabPhone/cameraphone"
 	$selfillum 		1
 	$halflambert	1
 }
