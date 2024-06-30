@@ -28,6 +28,7 @@ end
 if CLIENT then
 	local tex = GetRenderTargetEx("TabphoneRT8", 512, 512, RT_SIZE_NO_CHANGE, MATERIAL_RT_DEPTH_NONE, bit.bor(2, 256), 0, IMAGE_FORMAT_BGR888)
 	local cameratex = GetRenderTarget("TabphoneRTCam", 512, 512, false)
+	local thumbtex = GetRenderTarget("TabphoneRTCamThumb", 64, 64, false)
 
 	local myMat = CreateMaterial("TabphoneRTMat8", "UnlitGeneric", {
 		["$basetexture"] = tex:GetName(),
@@ -58,7 +59,8 @@ if CLIENT then
 	Tabphone = {}
 
 	TabMemory = TabMemory or {
-		ActiveApp = "mainmenu"
+		ActiveApp = "mainmenu",
+		GallerySelected = 1,
 	}
 
 	local function EnterApp(name)
@@ -145,7 +147,7 @@ if CLIENT then
 			end
 		end,
 		Func_Reload = function() end,
-		Func_Draw = function()
+		Func_Draw = function(w, h)
 			local Sortedapps = GetApps()
 
 			for i, prev in ipairs(Sortedapps) do
@@ -178,7 +180,7 @@ if CLIENT then
 			TabMemory.PageSwitchTime = CurTime()
 		end,
 		Func_Reload = function() end,
-		Func_Draw = function()
+		Func_Draw = function(w, h)
 			draw.SimpleText("Players online:", "Tabphone24", 8, 8 + 48, COL_BG)
 
 			for i, v in player.Iterator() do
@@ -197,7 +199,7 @@ if CLIENT then
 			EnterApp("mainmenu")
 		end,
 		Func_Reload = function() end,
-		Func_Draw = function()
+		Func_Draw = function(w, h)
 			for i = 0, 10 do
 				draw.SimpleText("WORK IN PROGRESS", "Tabphone32", BARRIER_FLIPPHONE / 2, 64 + (i * (32 + 4)), COL_BG, TEXT_ALIGN_CENTER)
 			end
@@ -214,7 +216,7 @@ if CLIENT then
 			EnterApp("mainmenu")
 		end,
 		Func_Reload = function() end,
-		Func_Draw = function()
+		Func_Draw = function(w, h)
 			for i = 0, 10 do
 				draw.SimpleText("WORK IN PROGRESS", "Tabphone32", BARRIER_FLIPPHONE / 2, 64 + (i * (32 + 4)), COL_BG, TEXT_ALIGN_CENTER)
 			end
@@ -231,7 +233,7 @@ if CLIENT then
 			EnterApp("mainmenu")
 		end,
 		Func_Reload = function() end,
-		Func_Draw = function() end,
+		Func_Draw = function(w, h) end,
 	}
 
 	Tabphone.Apps["call"] = {
@@ -247,7 +249,7 @@ if CLIENT then
 			EnterApp("mainmenu")
 		end,
 		Func_Reload = function() end,
-		Func_Draw = function()
+		Func_Draw = function(w, h)
 			surface.SetDrawColor(COL_FG)
 			surface.DrawRect(0, 0, 512, 512)
 			local jiggy = (math.Round(math.sin(CurTime() * 2 * math.pi) * 2, 0) / 2) * 16
@@ -267,7 +269,7 @@ if CLIENT then
 			EnterApp("mainmenu")
 		end,
 		Func_Reload = function() end,
-		Func_Draw = function() end,
+		Func_Draw = function(w, h) end,
 	}
 
 	local camera_nextdraw = 0
@@ -297,18 +299,58 @@ if CLIENT then
 				alpha = false,
 			})
 			file.CreateDir("arcrp_photos")
+			file.CreateDir("arcrp_photos/thumbs")
 			file.Write("arcrp_photos/" .. os.time() ..  ".png", content)
-
 			render.PopRenderTarget()
 
-			camera_nextphototime = CurTime() + 1
+			local rt = {
+				x = 0,
+				y = 0,
+				w = 64,
+				h = 64,
+				aspect = 1,
+				angles = EyeAngles(),
+				origin = EyePos(),
+				drawviewmodel = false,
+				fov = 50,
+				znear = 8
+			}
+			render.PushRenderTarget(thumbtex, 0, 0, 64, 64)
+			render.RenderView(rt)
+
+			DrawTexturize(1, pattern)
+
+			DrawColorModify({
+				["$pp_colour_addr"] = (COL_FG.r - 255) / 255,
+				["$pp_colour_addg"] = (COL_FG.g - 255) / 255,
+				["$pp_colour_addb"] = (COL_FG.b - 255) / 255,
+				["$pp_colour_brightness"] = 0.6,
+				["$pp_colour_contrast"] = 1.25,
+				["$pp_colour_colour"] = 1,
+				["$pp_colour_mulr"] = 0,
+				["$pp_colour_mulg"] = 0,
+				["$pp_colour_mulb"] = 0
+			})
+
+			local content_thumb = render.Capture({
+				format = "png",
+				x = 0,
+				y = 0,
+				w = 64,
+				h = 64,
+				alpha = false,
+			})
+			file.Write("arcrp_photos/thumbs/" .. os.time() ..  ".png", content_thumb)
+			render.PopRenderTarget()
+
+			camera_nextphototime = CurTime() + 1.1
+			camera_nextdraw = CurTime() + 1
 		end,
 		Func_Secondary = function()
 			EnterApp("mainmenu")
 		end,
 		Func_Reload = function() end,
 		Func_DrawScene = function()
-			if camera_nextphototime > CurTime() then return end
 			if camera_nextdraw < CurTime() then
 				local rt = {
 					x = 0,
@@ -331,8 +373,8 @@ if CLIENT then
 					["$pp_colour_addr"] = (COL_FG.r - 255) / 255,
 					["$pp_colour_addg"] = (COL_FG.g - 255) / 255,
 					["$pp_colour_addb"] = (COL_FG.b - 255) / 255,
-					["$pp_colour_brightness"] = 0.5,
-					["$pp_colour_contrast"] = 1,
+					["$pp_colour_brightness"] = 0.6,
+					["$pp_colour_contrast"] = 1.25,
 					["$pp_colour_colour"] = 1,
 					["$pp_colour_mulr"] = 0,
 					["$pp_colour_mulg"] = 0,
@@ -344,18 +386,17 @@ if CLIENT then
 				camera_nextdraw = CurTime() + 1 / camera_framerate
 			end
 		end,
-		Func_Draw = function()
-			local w = 405
-			local h = 512
+		Func_Draw = function(w, h)
 			surface.SetDrawColor(COL_FG)
 			surface.DrawRect(0, 0, 512, 512)
 
 			surface.SetMaterial(camMat)
+			surface.SetDrawColor(Color(255, 255, 255))
 			surface.DrawTexturedRect(0, 0, w, h)
 
 			if camera_nextphototime - 0.9 > CurTime() then
 				surface.SetDrawColor(Color(0, 0, 0))
-				surface.DrawRect(0, 0, 512, 512)
+				surface.DrawRect(0, 0, w, h)
 			end
 
 			if camera_nextphototime > CurTime() then return end
@@ -368,17 +409,97 @@ if CLIENT then
 		end,
 	}
 
+	local cachedgalleryimages = cachedgalleryimages or {}
+
+	local function GetGalleryImages()
+		cachedgalleryimages = {}
+		local images = file.Find("arcrp_photos/thumbs/*.png", "DATA", "datedesc")
+
+		local c = 0
+
+		for i, filename in ipairs(images) do
+			if c >= 9 then break end
+			c = c + 1
+			table.insert(cachedgalleryimages, {
+				index = i,
+				filename = filename,
+				thumbmat = Material("data/arcrp_photos/thumbs/" .. filename)
+			})
+		end
+	end
+
 	Tabphone.Apps["gallery"] = {
 		Name = "Gallery",
 		Icon = Material("fesiug/tabphone/gallery.png"),
 		SortOrder = -1019,
-		Func_Enter = function() end,
-		Func_Primary = function() end,
+		Func_Enter = function()
+			GetGalleryImages()
+		end,
+		Func_Primary = function()
+			EnterApp("gallery_viewer")
+		end,
 		Func_Secondary = function()
 			EnterApp("mainmenu")
 		end,
+		Func_Scroll = function(level)
+			if not TabMemory.GallerySelected then
+				TabMemory.GallerySelected = 1
+			end
+
+			TabMemory.GallerySelected = TabMemory.GallerySelected + level
+			local PhotoCount = #cachedgalleryimages
+
+			if TabMemory.GallerySelected <= 0 then
+				TabMemory.GallerySelected = PhotoCount
+			elseif TabMemory.GallerySelected > PhotoCount then
+				TabMemory.GallerySelected = 1
+			end
+		end,
 		Func_Reload = function() end,
-		Func_Draw = function() end,
+		Func_Draw = function(w, h)
+			for i, k in ipairs(cachedgalleryimages) do
+				local xslot = (i - 1) % 3
+				local yslot = math.ceil(i / 3)
+
+				local sel = TabMemory.GallerySelected == i
+
+				local sw = 120
+				local sh = 120
+				local x = 10 + xslot * (sw + 10)
+				local y = -60 + yslot * (sh + 10)
+
+				if sel then
+					surface.SetDrawColor(0, 0, 0)
+					surface.DrawRect(x - 5, y - 5, sw + 10, sh + 10)
+				end
+
+				surface.SetMaterial(k.thumbmat)
+				surface.SetDrawColor(255, 255, 255)
+				surface.DrawTexturedRect(x, y, sw, sh)
+			end
+		end,
+	}
+
+	Tabphone.Apps["gallery_viewer"] = {
+		Name = "Image Viewer",
+		Hidden = true,
+		LeftText = "",
+		Func_Enter = function() end,
+		Func_Primary = function() end,
+		Func_Secondary = function()
+			EnterApp("gallery")
+		end,
+		Func_Reload = function() end,
+		Func_Draw = function(w, h)
+			local image = cachedgalleryimages[TabMemory.GallerySelected]
+
+			if not image then return end
+			if not image.material then image.material = Material("data/arcrp_photos/" .. image.filename) end
+
+			surface.SetMaterial(image.material)
+			surface.SetDrawColor(255, 255, 255)
+			surface.DrawTexturedRect(0, 0, 512, 512)
+		end,
 	}
 
 	function SWEP:PreDrawViewModel(vm, wep, ply)
@@ -388,7 +509,7 @@ if CLIENT then
 		surface.DrawRect(0, 0, 512, 512)
 		local active = TabMemory.ActiveApp
 		local activeapp = Tabphone.Apps[active]
-		activeapp.Func_Draw()
+		activeapp.Func_Draw(405, 512)
 		local blah = ColorAlpha(COL_FG, math.Clamp(math.Remap(CurTime(), TabMemory.PageSwitchTime or 0, (TabMemory.PageSwitchTime or 0) + 0.2, 1, 0), 0, 1) * 255)
 		surface.SetDrawColor(blah)
 		surface.DrawRect(0, 48, 512, 512 - 32 - 8)
@@ -482,7 +603,7 @@ if CLIENT then
 			end
 
 			if block then
-				local active = "mainmenu"
+				local active = TabMemory.ActiveApp
 				Tabphone.Apps[active].Func_Scroll(block)
 				ply:GetActiveWeapon():Keypress()
 				-- It'd be nice to also animate the VM, but this is a clientside hook.
