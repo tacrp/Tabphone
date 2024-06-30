@@ -82,6 +82,17 @@ function SWEP:SecondaryAttack()
 	end
 end
 
+function SWEP:Reload()
+	if !self:GetOwner():KeyPressed(IN_RELOAD) then return end
+	self:QuickAnim("reload")
+	self:Keypress()
+
+	if CLIENT and IsFirstTimePredicted() then
+		local active = TabMemory.ActiveApp
+		TabPhone.Apps[active].Func_Reload()
+	end
+end
+
 function SWEP:Deploy()
 	self:QuickAnim("open")
 	self:EmitSound("fesiug/TabPhone/draw.ogg", 70, 100, 1)

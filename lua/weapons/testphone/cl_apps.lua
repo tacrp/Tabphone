@@ -391,7 +391,9 @@ TabPhone.Apps["camera"] = {
     Icon = Material("fesiug/TabPhone/camera.png"),
     SortOrder = -1020,
     LeftText = "TAKE PHOTO",
-    Func_Enter = function() end,
+    Func_Enter = function()
+		TabMemory.CameraZoom = 1
+	end,
     Func_Primary = function()
         if TabMemory.NextPhotoTime > CurTime() then return end
 		local vangle = LocalPlayer():EyeAngles()
@@ -415,11 +417,13 @@ TabPhone.Apps["camera"] = {
 
             surface.PlaySound("npc/scanner/scanner_photo1.wav")
 
+			local size, size2 = 512, 512
+			size2 = size * TabMemory.CameraZoom
             local rt = {
-                x = 0,
-                y = 0,
-                w = 512,
-                h = 512,
+                x = size/2 - ((size2-size)/2),
+                y = size/2 - ((size2-size)/2),
+                w = size2,
+                h = size2,
                 aspect = 1,
                 angles = vangle,
                 origin = EyePos(),
@@ -503,9 +507,15 @@ TabPhone.Apps["camera"] = {
     Func_Secondary = function()
         TabPhone.EnterApp("mainmenu")
     end,
-    Func_Reload = function() end,
+    Func_Reload = function()
+		TabMemory.Flash = !TabMemory.Flash
+	end,
     Func_Scroll = function(level)
-        TabMemory.Flash = level > 0
+		local last = TabMemory.CameraZoom
+		TabMemory.CameraZoom = math.Clamp( TabMemory.CameraZoom-(level), 1, 10 )
+		if last != TabMemory.CameraZoom then
+			surface.PlaySound(level > 0 and "fesiug/tabphone/zoom_out.ogg" or "fesiug/tabphone/zoom_in.ogg")
+		end
     end,
     Func_DrawScene = function()
         if camera_nextdraw < CurTime() then
@@ -518,7 +528,7 @@ TabPhone.Apps["camera"] = {
                 angles = vangle,
                 origin = EyePos(),
                 drawviewmodel = false,
-                fov = 50,
+                fov = 50/TabMemory.CameraZoom,
                 znear = 8
             }
             render.PushRenderTarget(cameratex, 0, 0, 512, 512)
