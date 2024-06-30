@@ -7,7 +7,7 @@ local myMat = CreateMaterial("TabPhoneRTMat8", "UnlitGeneric", {
 local COL_FG = Color(76, 104, 79)
 local COL_BG = color_black
 
-local sizes = {32, 28, 24, 22, 16,}
+local sizes = {48, 32, 28, 24, 22, 16}
 
 for i, v in pairs(sizes) do
     surface.CreateFont("TabPhone" .. v, {
@@ -26,7 +26,8 @@ TabMemory = TabMemory or {
     --GallerySelected = 1,
     SelectedSetting = 1,
     Flash = false,
-    NextPhotoTime = 0
+    NextPhotoTime = 0,
+	YouDial = "",
 }
 
 function TabPhone.EnterApp(name)

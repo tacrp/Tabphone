@@ -110,25 +110,60 @@ if CLIENT then
 		if w:IsValid() and w:GetClass() == "testphone" then
 			local block = nil
 
-			if pressed and bind == "invnext" then
-				block = 1
-				-- w:QuickAnim("scdown")
-			elseif pressed and bind == "invprev" then
-				block = -1
-				-- w:QuickAnim("scup")
+			if pressed then
+				if bind == "invnext" then
+					block = 1
+					-- w:QuickAnim("scdown")
+				elseif bind == "invprev" then
+					block = -1
+					-- w:QuickAnim("scup")
+				elseif bind == "slot1" then
+					TabMemory.YouDial = TabMemory.YouDial .. "1"
+					block = true
+				elseif bind == "slot2" then
+					TabMemory.YouDial = TabMemory.YouDial .. "2"
+					block = true
+				elseif bind == "slot3" then
+					TabMemory.YouDial = TabMemory.YouDial .. "3"
+					block = true
+				elseif bind == "slot4" then
+					TabMemory.YouDial = TabMemory.YouDial .. "4"
+					block = true
+				elseif bind == "slot5" then
+					TabMemory.YouDial = TabMemory.YouDial .. "5"
+					block = true
+				elseif bind == "slot6" then
+					TabMemory.YouDial = TabMemory.YouDial .. "6"
+					block = true
+				elseif bind == "slot7" then
+					TabMemory.YouDial = TabMemory.YouDial .. "7"
+					block = true
+				elseif bind == "slot8" then
+					TabMemory.YouDial = TabMemory.YouDial .. "8"
+					block = true
+				elseif bind == "slot9" then
+					TabMemory.YouDial = TabMemory.YouDial .. "9"
+					block = true
+				elseif bind == "slot0" then
+					TabMemory.YouDial = TabMemory.YouDial .. "0"
+					block = true
+				end
 			end
 
+			local active = TabMemory.ActiveApp
+			local activeapp = TabPhone.Apps[active]
 			if block then
-				local active = TabMemory.ActiveApp
-				local activeapp = TabPhone.Apps[active]
+				-- It'd be nice to also animate the VM, but this is a clientside hook.
+				if block == true and active == "dialer" then
+					w:Keypress()
+					return true
+				end
 
-				if activeapp.Func_Scroll then
+				if block != true and activeapp.Func_Scroll then
 					activeapp.Func_Scroll(block)
 					w:Keypress()
+					return true
 				end
-				-- It'd be nice to also animate the VM, but this is a clientside hook.
-
-				return true
 			end
 		end
 	end)

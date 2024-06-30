@@ -257,6 +257,34 @@ TabPhone.Apps["calendar"] = {
 	end,
 }
 
+TabPhone.Apps["dialer"] = {
+    Name = "Dialer",
+    Icon = Material("fesiug/TabPhone/phone.png"),
+    SortOrder = -1006,
+    Func_Enter = function()
+		TabMemory.YouDial = ""
+	end,
+    Func_Primary = function() end,
+    Func_Secondary = function()
+        TabPhone.EnterApp("mainmenu")
+    end,
+    Func_Reload = function() end,
+    Func_Draw = function(w, h)
+		TabMemory.LeftText = "CALL"
+		local YOUDIAL = TabMemory.YouDial or ""
+		draw.SimpleText(YOUDIAL, "TabPhone48", BARRIER_FLIPPHONE-4, 48+48, COL_BG, TEXT_ALIGN_RIGHT)
+		draw.SimpleText("USE NUMROW OR NUMPAD", "TabPhone24", BARRIER_FLIPPHONE/2, 48+12, COL_BG, TEXT_ALIGN_CENTER)
+
+		if (CurTime()*2)%1 > 0.5 then
+			surface.SetFont("TabPhone48")
+			local tsn = surface.GetTextSize("8")
+			surface.SetDrawColor( COL_BG )
+			surface.DrawRect( BARRIER_FLIPPHONE-4-(tsn+6), 48+48, (tsn+6), 48+6 )
+			draw.SimpleText(YOUDIAL:Right(1), "TabPhone48", BARRIER_FLIPPHONE-4, 48+48, COL_FG, TEXT_ALIGN_RIGHT)
+		end
+	end,
+}
+
 TabPhone.Apps["shopping"] = {
     Name = "Shopping",
     Icon = Material("fesiug/TabPhone/shopper.png"),
