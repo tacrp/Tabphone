@@ -1,0 +1,6 @@
+"VertexlitGeneric"
+{
+	"$basetexture"			"fesiug/tabphone/3110_diffuse"	
+	"$bumpmap"				"fesiug/tabphone/3110_lazyspecular"
+	"$halflambert" "1
+}
