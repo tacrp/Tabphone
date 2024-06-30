@@ -13,6 +13,8 @@ SWEP.Primary.Ammo = ""
 SWEP.Secondary.ClipSize = -1
 SWEP.Secondary.Ammo = ""
 
+SWEP.IsTabPhone = true
+
 function SWEP:QuickAnim(name)
 	local vm = self:GetOwner():GetViewModel()
 	vm:SetPlaybackRate(1)
@@ -25,9 +27,14 @@ end
 
 if CLIENT then
 	local tex = GetRenderTargetEx("TabphoneRT8", 512, 512, RT_SIZE_NO_CHANGE, MATERIAL_RT_DEPTH_NONE, bit.bor(2, 256), 0, IMAGE_FORMAT_BGR888)
+	local cameratex = GetRenderTarget("TabphoneRTCam", 512, 512, false)
 
 	local myMat = CreateMaterial("TabphoneRTMat8", "UnlitGeneric", {
 		["$basetexture"] = tex:GetName(),
+	})
+
+	local camMat = CreateMaterial("TabphoneRTCam", "UnlitGeneric", {
+		["$basetexture"] = cameratex:GetName(),
 	})
 
 	local COL_FG = Color(76, 104, 79)
@@ -263,13 +270,125 @@ if CLIENT then
 		Func_Draw = function() end,
 	}
 
+	local camera_nextdraw = 0
+	local camera_framerate = 15
+	local camera_nextphototime = 0
+
+	local pattern = Material("pp/texturize/plain.png")
+
+	Tabphone.Apps["camera"] = {
+		Name = "Camera",
+		Icon = Material("fesiug/tabphone/camera.png"),
+		SortOrder = -1020,
+		LeftText = "TAKE PHOTO",
+		Func_Enter = function() end,
+		Func_Primary = function()
+			if camera_nextphototime > CurTime() then return end
+
+			render.PushRenderTarget(cameratex, 0, 0, 512, 512)
+
+			surface.PlaySound("npc/scanner/scanner_photo1.wav")
+			local content = render.Capture({
+				format = "png",
+				x = 0,
+				y = 0,
+				w = 512,
+				h = 512,
+				alpha = false,
+			})
+			file.CreateDir("arcrp_photos")
+			file.Write("arcrp_photos/" .. os.time() ..  ".png", content)
+
+			render.PopRenderTarget()
+
+			camera_nextphototime = CurTime() + 1
+		end,
+		Func_Secondary = function()
+			EnterApp("mainmenu")
+		end,
+		Func_Reload = function() end,
+		Func_DrawScene = function()
+			if camera_nextphototime > CurTime() then return end
+			if camera_nextdraw < CurTime() then
+				local rt = {
+					x = 0,
+					y = 0,
+					w = 512,
+					h = 512,
+					aspect = 1,
+					angles = EyeAngles(),
+					origin = EyePos(),
+					drawviewmodel = false,
+					fov = 50,
+					znear = 8
+				}
+				render.PushRenderTarget(cameratex, 0, 0, 512, 512)
+				render.RenderView(rt)
+
+				DrawTexturize(1, pattern)
+
+				DrawColorModify({
+					["$pp_colour_addr"] = (COL_FG.r - 255) / 255,
+					["$pp_colour_addg"] = (COL_FG.g - 255) / 255,
+					["$pp_colour_addb"] = (COL_FG.b - 255) / 255,
+					["$pp_colour_brightness"] = 0.5,
+					["$pp_colour_contrast"] = 1,
+					["$pp_colour_colour"] = 1,
+					["$pp_colour_mulr"] = 0,
+					["$pp_colour_mulg"] = 0,
+					["$pp_colour_mulb"] = 0
+				})
+
+				render.PopRenderTarget()
+
+				camera_nextdraw = CurTime() + 1 / camera_framerate
+			end
+		end,
+		Func_Draw = function()
+			local w = 405
+			local h = 512
+			surface.SetDrawColor(COL_FG)
+			surface.DrawRect(0, 0, 512, 512)
+
+			surface.SetMaterial(camMat)
+			surface.DrawTexturedRect(0, 0, w, h)
+
+			if camera_nextphototime - 0.9 > CurTime() then
+				surface.SetDrawColor(Color(0, 0, 0))
+				surface.DrawRect(0, 0, 512, 512)
+			end
+
+			if camera_nextphototime > CurTime() then return end
+			// rule of thirds !!!
+			surface.SetDrawColor(0, 0, 0)
+			surface.DrawLine(0, h / 3, w, h / 3)
+			surface.DrawLine(0, h * 2 / 3, w, h * 2 / 3)
+			surface.DrawLine(w / 3, 0, w / 3, h)
+			surface.DrawLine(w * 2 / 3, 0, w * 2 / 3, h)
+		end,
+	}
+
+	Tabphone.Apps["gallery"] = {
+		Name = "Gallery",
+		Icon = Material("fesiug/tabphone/gallery.png"),
+		SortOrder = -1019,
+		Func_Enter = function() end,
+		Func_Primary = function() end,
+		Func_Secondary = function()
+			EnterApp("mainmenu")
+		end,
+		Func_Reload = function() end,
+		Func_Draw = function() end,
+	}
+
 	function SWEP:PreDrawViewModel(vm, wep, ply)
 		render.PushRenderTarget(tex)
 		cam.Start2D()
 		surface.SetDrawColor(COL_FG)
 		surface.DrawRect(0, 0, 512, 512)
 		local active = TabMemory.ActiveApp
-		Tabphone.Apps[active].Func_Draw()
+		local activeapp = Tabphone.Apps[active]
+		activeapp.Func_Draw()
 		local blah = ColorAlpha(COL_FG, math.Clamp(math.Remap(CurTime(), TabMemory.PageSwitchTime or 0, (TabMemory.PageSwitchTime or 0) + 0.2, 1, 0), 0, 1) * 255)
 		surface.SetDrawColor(blah)
 		surface.DrawRect(0, 48, 512, 512 - 32 - 8)
@@ -306,8 +425,8 @@ if CLIENT then
 		surface.SetDrawColor(COL_BG)
 		surface.DrawRect(0, 512 - 32 - 8, 512, 32 + 8)
 		--surface.DrawRect( 0, 512-4, 512, 4 )
-		draw.SimpleText("SELECT", "Tabphone28", 4, 512 - 32 - 4, COL_FG)
-		draw.SimpleText("BACK", "Tabphone28", BARRIER_FLIPPHONE - 4, 512 - 32 - 4, COL_FG, TEXT_ALIGN_RIGHT)
+		draw.SimpleText(activeapp.LeftText or "SELECT", "Tabphone28", 4, 512 - 32 - 4, COL_FG)
+		draw.SimpleText(activeapp.RightText or "BACK", "Tabphone28", BARRIER_FLIPPHONE - 4, 512 - 32 - 4, COL_FG, TEXT_ALIGN_RIGHT)
 		cam.End2D()
 		render.PopRenderTarget()
 		render.MaterialOverrideByIndex(1, myMat)
@@ -369,6 +488,17 @@ if CLIENT then
 				-- It'd be nice to also animate the VM, but this is a clientside hook.
 
 				return true
+			end
+		end
+	end)
+
+	hook.Add("PreRender", "TabPhone", function()
+		local wpn = LocalPlayer():GetActiveWeapon()
+
+		if wpn.IsTabPhone then
+			local activeapp = Tabphone.Apps[TabMemory.ActiveApp]
+			if activeapp.Func_DrawScene then
+				activeapp.Func_DrawScene()
 			end
 		end
 	end)
