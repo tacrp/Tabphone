@@ -679,7 +679,7 @@ TabPhone.Apps["gallery"] = {
 	end,
     Func_Draw = function(w, h)
 		TabMemory.LeftText = ""
-		if #cachedgalleryimages >= 0 then
+		if #cachedgalleryimages <= 0 then
 			draw.SimpleText( "NO PHOTOS", "TabPhone32", w/2, (512-48)/2 - (40/2), COL_BG, TEXT_ALIGN_CENTER )
 		end
 		for i, k in ipairs(cachedgalleryimages) do
