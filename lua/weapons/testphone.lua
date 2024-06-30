@@ -556,6 +556,20 @@ if CLIENT then
 	function SWEP:PostDrawViewModel(vm, ply, wep)
 		render.MaterialOverrideByIndex(1, nil)
 	end
+
+	function SWEP:Think()
+		local dlight = DynamicLight( self:GetOwner():EntIndex() )
+		if ( dlight ) then
+			dlight.pos = self:GetOwner():EyePos()
+			dlight.r = COL_FG.r
+			dlight.g = COL_FG.g
+			dlight.b = COL_FG.b
+			dlight.brightness = 0.1
+			dlight.decay = 1024
+			dlight.size = 128
+			dlight.dietime = CurTime() + 1
+		end
+	end
 end
 
 function SWEP:PrimaryAttack()
