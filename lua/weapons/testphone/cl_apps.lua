@@ -231,11 +231,13 @@ TabPhone.Apps["call"] = {
     Icon = Material("fesiug/TabPhone/phone.png"),
     SortOrder = 0,
     Func_Enter = function()
-        LocalPlayer():EmitSound("fesiug/TabPhone/ringtone_toy.ogg", 100, 100, 1, CHAN_STATIC)
+        local sound = "fesiug/tabphone/ringtones/" .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
+        LocalPlayer():EmitSound(sound, 100, 100, 1, CHAN_STATIC)
     end,
     Func_Primary = function() end,
     Func_Secondary = function()
-        LocalPlayer():StopSound("fesiug/TabPhone/ringtone_toy.ogg")
+        local sound = "fesiug/tabphone/ringtones/" .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
+        LocalPlayer():StopSound(sound)
         TabPhone.EnterApp("mainmenu")
     end,
     Func_Reload = function() end,
@@ -273,6 +275,9 @@ local settings_options = {
         type = "func",
         func_change = function()
             TabPhone.EnterApp("mainmenu")
+            if TabMemory.RingToneExample then
+                TabMemory.RingToneExample:Stop()
+            end
         end
     }
 }
@@ -310,7 +315,7 @@ local function changeOption(level)
             end
         else
             if isfunction(opt.func_change) then
-                opt.func_change(val)
+                opt.func_change()
             end
         end
 end
