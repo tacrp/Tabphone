@@ -243,6 +243,7 @@ TabPhone.Apps["calendar"] = {
     Name = "Calendar",
     Icon = Material("fesiug/TabPhone/calendar.png"),
     SortOrder = -1006,
+	Hidden = true,
     Func_Enter = function() end,
     Func_Primary = function() end,
     Func_Secondary = function()
