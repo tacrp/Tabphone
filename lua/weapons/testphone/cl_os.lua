@@ -23,7 +23,7 @@ local IMAGE_CELL = Material("fesiug/TabPhone/cell2.png")
 
 TabMemory = TabMemory or {
     ActiveApp = "mainmenu",
-    GallerySelected = 1,
+    --GallerySelected = 1,
     SelectedSetting = 1,
     Flash = false,
     NextPhotoTime = 0
@@ -110,15 +110,15 @@ end
 function SWEP:Think()
     if TabMemory.NextPhotoTime > CurTime() then return end
 
-    local dlight = DynamicLight( self:GetOwner():EntIndex() )
-    if ( dlight ) then
-        dlight.pos = self:GetOwner():EyePos()
-        dlight.r = COL_FG.r
-        dlight.g = COL_FG.g
-        dlight.b = COL_FG.b
-        dlight.brightness = 0.1
-        dlight.decay = 1024
-        dlight.size = 128
-        dlight.dietime = CurTime() + 1
-    end
+    --local dlight = DynamicLight( self:GetOwner():EntIndex() )
+    --if ( dlight ) then
+    --    dlight.pos = self:GetOwner():EyePos()
+    --    dlight.r = COL_FG.r
+    --    dlight.g = COL_FG.g
+    --    dlight.b = COL_FG.b
+    --    dlight.brightness = 0.1
+    --    dlight.decay = 1024
+    --    dlight.size = 128
+    --    dlight.dietime = CurTime() + 1
+    --end
 end
