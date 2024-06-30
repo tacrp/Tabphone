@@ -61,6 +61,7 @@ if CLIENT then
 	TabMemory = TabMemory or {
 		ActiveApp = "mainmenu",
 		GallerySelected = 1,
+		Flash = false
 	}
 
 	local function EnterApp(name)
@@ -277,6 +278,8 @@ if CLIENT then
 	local camera_nextphototime = 0
 
 	local pattern = Material("pp/texturize/plain.png")
+	local flashmat = Material("fesiug/tabphone/flash.png")
+	local noflashmat = Material("fesiug/tabphone/noflash.png")
 
 	Tabphone.Apps["camera"] = {
 		Name = "Camera",
@@ -287,61 +290,106 @@ if CLIENT then
 		Func_Primary = function()
 			if camera_nextphototime > CurTime() then return end
 
-			render.PushRenderTarget(cameratex, 0, 0, 512, 512)
+			if TabMemory.Flash then
+				local dlight = DynamicLight( LocalPlayer():EntIndex() )
+				if ( dlight ) then
+					dlight.pos = LocalPlayer():EyePos()
+					dlight.r = 255
+					dlight.g = 255
+					dlight.b = 255
+					dlight.brightness = 1
+					dlight.decay = 0
+					dlight.size = 2048
+					dlight.dietime = CurTime() + 0.1
+				end
+			end
 
-			surface.PlaySound("npc/scanner/scanner_photo1.wav")
-			local content = render.Capture({
-				format = "png",
-				x = 0,
-				y = 0,
-				w = 512,
-				h = 512,
-				alpha = false,
-			})
-			file.CreateDir("arcrp_photos")
-			file.CreateDir("arcrp_photos/thumbs")
-			file.Write("arcrp_photos/" .. os.time() ..  ".png", content)
-			render.PopRenderTarget()
+			timer.Simple(0, function()
+				render.PushRenderTarget(cameratex, 0, 0, 512, 512)
 
-			local rt = {
-				x = 0,
-				y = 0,
-				w = 64,
-				h = 64,
-				aspect = 1,
-				angles = EyeAngles(),
-				origin = EyePos(),
-				drawviewmodel = false,
-				fov = 50,
-				znear = 8
-			}
-			render.PushRenderTarget(thumbtex, 0, 0, 64, 64)
-			render.RenderView(rt)
+				surface.PlaySound("npc/scanner/scanner_photo1.wav")
 
-			DrawTexturize(1, pattern)
+				local rt = {
+					x = 0,
+					y = 0,
+					w = 512,
+					h = 512,
+					aspect = 1,
+					angles = EyeAngles(),
+					origin = EyePos(),
+					drawviewmodel = false,
+					fov = 50,
+					znear = 8
+				}
+				render.RenderView(rt)
 
-			DrawColorModify({
-				["$pp_colour_addr"] = (COL_FG.r - 255) / 255,
-				["$pp_colour_addg"] = (COL_FG.g - 255) / 255,
-				["$pp_colour_addb"] = (COL_FG.b - 255) / 255,
-				["$pp_colour_brightness"] = 0.6,
-				["$pp_colour_contrast"] = 1.25,
-				["$pp_colour_colour"] = 1,
-				["$pp_colour_mulr"] = 0,
-				["$pp_colour_mulg"] = 0,
-				["$pp_colour_mulb"] = 0
-			})
+				DrawTexturize(1, pattern)
 
-			local content_thumb = render.Capture({
-				format = "png",
-				x = 0,
-				y = 0,
-				w = 64,
-				h = 64,
-				alpha = false,
-			})
-			file.Write("arcrp_photos/thumbs/" .. os.time() ..  ".png", content_thumb)
-			render.PopRenderTarget()
+				DrawColorModify({
+					["$pp_colour_addr"] = (COL_FG.r - 255) / 255,
+					["$pp_colour_addg"] = (COL_FG.g - 255) / 255,
+					["$pp_colour_addb"] = (COL_FG.b - 255) / 255,
+					["$pp_colour_brightness"] = 0.6,
+					["$pp_colour_contrast"] = 1.25,
+					["$pp_colour_colour"] = 1,
+					["$pp_colour_mulr"] = 0,
+					["$pp_colour_mulg"] = 0,
+					["$pp_colour_mulb"] = 0
+				})
+
+				local content = render.Capture({
+					format = "png",
+					x = 0,
+					y = 0,
+					w = 512,
+					h = 512,
+					alpha = false,
+				})
+				file.CreateDir("arcrp_photos")
+				file.CreateDir("arcrp_photos/thumbs")
+				file.Write("arcrp_photos/" .. os.time() ..  ".png", content)
+				render.PopRenderTarget()
+
+				local rt_thumb = {
+					x = 0,
+					y = 0,
+					w = 64,
+					h = 64,
+					aspect = 1,
+					angles = EyeAngles(),
+					origin = EyePos(),
+					drawviewmodel = false,
+					fov = 50,
+					znear = 8
+				}
+				render.PushRenderTarget(thumbtex, 0, 0, 64, 64)
+				render.RenderView(rt_thumb)
+
+				DrawTexturize(1, pattern)
+
+				DrawColorModify({
+					["$pp_colour_addr"] = (COL_FG.r - 255) / 255,
+					["$pp_colour_addg"] = (COL_FG.g - 255) / 255,
+					["$pp_colour_addb"] = (COL_FG.b - 255) / 255,
+					["$pp_colour_brightness"] = 0.6,
+					["$pp_colour_contrast"] = 1.25,
+					["$pp_colour_colour"] = 1,
+					["$pp_colour_mulr"] = 0,
+					["$pp_colour_mulg"] = 0,
+					["$pp_colour_mulb"] = 0
+				})
+
+				local content_thumb = render.Capture({
+					format = "png",
+					x = 0,
+					y = 0,
+					w = 64,
+					h = 64,
+					alpha = false,
+				})
+				file.Write("arcrp_photos/thumbs/" .. os.time() ..  ".png", content_thumb)
+				render.PopRenderTarget()
+			end)
 
 			camera_nextphototime = CurTime() + 1.1
 			camera_nextdraw = CurTime() + 1
@@ -350,6 +398,9 @@ if CLIENT then
 			EnterApp("mainmenu")
 		end,
 		Func_Reload = function() end,
+		Func_Scroll = function(level)
+			TabMemory.Flash = level > 0
+		end,
 		Func_DrawScene = function()
 			if camera_nextdraw < CurTime() then
 				local rt = {
@@ -401,11 +452,22 @@ if CLIENT then
 
 			if camera_nextphototime > CurTime() then return end
 			// rule of thirds !!!
-			surface.SetDrawColor(0, 0, 0)
+			if TabMemory.Flash then
+				surface.SetDrawColor(COL_FG)
+			else
+				surface.SetDrawColor(COL_BG)
+			end
 			surface.DrawLine(0, h / 3, w, h / 3)
 			surface.DrawLine(0, h * 2 / 3, w, h * 2 / 3)
 			surface.DrawLine(w / 3, 0, w / 3, h)
 			surface.DrawLine(w * 2 / 3, 0, w * 2 / 3, h)
+
+			if TabMemory.Flash then
+				surface.SetMaterial(flashmat)
+			else
+				surface.SetMaterial(noflashmat)
+			end
+			surface.DrawTexturedRect(10, 64, 48, 48)
 		end,
 	}
 
@@ -490,6 +552,20 @@ if CLIENT then
 			EnterApp("gallery")
 		end,
 		Func_Reload = function() end,
+		Func_Scroll = function(level)
+			if not TabMemory.GallerySelected then
+				TabMemory.GallerySelected = 1
+			end
+
+			TabMemory.GallerySelected = TabMemory.GallerySelected + level
+			local PhotoCount = #cachedgalleryimages
+
+			if TabMemory.GallerySelected <= 0 then
+				TabMemory.GallerySelected = PhotoCount
+			elseif TabMemory.GallerySelected > PhotoCount then
+				TabMemory.GallerySelected = 1
+			end
+		end,
 		Func_Draw = function(w, h)
 			local image = cachedgalleryimages[TabMemory.GallerySelected]
 
@@ -558,6 +634,8 @@ if CLIENT then
 	end
 
 	function SWEP:Think()
+		if camera_nextphototime > CurTime() then return end
+
 		local dlight = DynamicLight( self:GetOwner():EntIndex() )
 		if ( dlight ) then
 			dlight.pos = self:GetOwner():EyePos()
@@ -618,8 +696,12 @@ if CLIENT then
 
 			if block then
 				local active = TabMemory.ActiveApp
-				Tabphone.Apps[active].Func_Scroll(block)
-				ply:GetActiveWeapon():Keypress()
+				local activeapp = Tabphone.Apps[active]
+
+				if activeapp.Func_Scroll then
+					activeapp.Func_Scroll(block)
+					ply:GetActiveWeapon():Keypress()
+				end
 				-- It'd be nice to also animate the VM, but this is a clientside hook.
 
 				return true
