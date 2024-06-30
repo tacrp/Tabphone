@@ -28,13 +28,27 @@ TabMemory = TabMemory or {
     NextPhotoTime = 0
 }
 
-
 function TabPhone.EnterApp(name)
     local from = TabMemory.ActiveApp
     TabMemory.ActiveApp = name
     TabMemory.PageSwitchTime = CurTime()
     local active = TabMemory.ActiveApp
     TabPhone.Apps[active].Func_Enter(from)
+end
+
+function TabPhone.Scroll(level, var, total)
+    if not TabMemory[var] then
+        TabMemory[var] = 1
+    end
+
+    TabMemory[var] = TabMemory[var] + level
+    local Appcount = total
+
+    if TabMemory[var] <= 0 then
+        TabMemory[var] = Appcount
+    elseif TabMemory[var] > Appcount then
+        TabMemory[var] = 1
+    end
 end
 
 function SWEP:PreDrawViewModel(vm, wep, ply)

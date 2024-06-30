@@ -73,18 +73,7 @@ TabPhone.Apps["mainmenu"] = {
         end
     end,
     Func_Scroll = function(level)
-        if not TabMemory.Selected then
-            TabMemory.Selected = 1
-        end
-
-        TabMemory.Selected = TabMemory.Selected + level
-        local Appcount = AppCount()
-
-        if TabMemory.Selected <= 0 then
-            TabMemory.Selected = Appcount
-        elseif TabMemory.Selected > Appcount then
-            TabMemory.Selected = 1
-        end
+        TabPhone.Scroll(level, "Selected", AppCount())
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
@@ -442,18 +431,7 @@ TabPhone.Apps["gallery"] = {
         TabPhone.EnterApp("mainmenu")
     end,
     Func_Scroll = function(level)
-        if not TabMemory.GallerySelected then
-            TabMemory.GallerySelected = 1
-        end
-
-        TabMemory.GallerySelected = TabMemory.GallerySelected + level
-        local PhotoCount = #cachedgalleryimages
-
-        if TabMemory.GallerySelected <= 0 then
-            TabMemory.GallerySelected = PhotoCount
-        elseif TabMemory.GallerySelected > PhotoCount then
-            TabMemory.GallerySelected = 1
-        end
+        TabPhone.Scroll(level, "GallerySelected", #cachedgalleryimages)
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
@@ -491,18 +469,7 @@ TabPhone.Apps["gallery_viewer"] = {
     end,
     Func_Reload = function() end,
     Func_Scroll = function(level)
-        if not TabMemory.GallerySelected then
-            TabMemory.GallerySelected = 1
-        end
-
-        TabMemory.GallerySelected = TabMemory.GallerySelected + level
-        local PhotoCount = #cachedgalleryimages
-
-        if TabMemory.GallerySelected <= 0 then
-            TabMemory.GallerySelected = PhotoCount
-        elseif TabMemory.GallerySelected > PhotoCount then
-            TabMemory.GallerySelected = 1
-        end
+        TabPhone.Scroll(level, "GallerySelected", #cachedgalleryimages)
     end,
     Func_Draw = function(w, h)
         local image = cachedgalleryimages[TabMemory.GallerySelected]
