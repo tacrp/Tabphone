@@ -32,7 +32,7 @@ TabMemory = TabMemory or {
 function TabPhone.EnterApp(name)
     local from = TabMemory.ActiveApp
     TabMemory.ActiveApp = name
-    TabMemory.PageSwitchTime = UnPredictedCurTime()
+    TabMemory.PageSwitchTime = UnPredictedUnPredictedCurTime()
     local active = TabMemory.ActiveApp
     TabPhone.Apps[active].Func_Enter(from)
 end
@@ -63,7 +63,7 @@ function SWEP:PreDrawViewModel(vm, wep, ply)
     local active = TabMemory.ActiveApp
     local activeapp = TabPhone.Apps[active]
     activeapp.Func_Draw(405, 512)
-    local blah = ColorAlpha(COL_FG, math.Clamp(math.Remap(UnPredictedCurTime(), TabMemory.PageSwitchTime or 0, (TabMemory.PageSwitchTime or 0) + 0.2, 1, 0), 0, 1) * 255)
+    local blah = ColorAlpha(COL_FG, math.Clamp(math.Remap(UnPredictedUnPredictedCurTime(), TabMemory.PageSwitchTime or 0, (TabMemory.PageSwitchTime or 0) + 0.2, 1, 0), 0, 1) * 255)
     surface.SetDrawColor(blah)
     surface.DrawRect(0, 48, 512, 512 - 32 - 8)
     surface.SetDrawColor(COL_BG)
@@ -81,7 +81,7 @@ function SWEP:PreDrawViewModel(vm, wep, ply)
     -- 24 hr
     local colon = ":"
 
-    if math.floor(CurTime()) % 2 == 0 then
+    if math.floor(UnPredictedCurTime()) % 2 == 0 then
         colon = " "
     end
 
@@ -111,7 +111,7 @@ function SWEP:PostDrawViewModel(vm, ply, wep)
 end
 
 function SWEP:Think()
-    if TabMemory.NextPhotoTime > CurTime() then return end
+    if TabMemory.NextPhotoTime > UnPredictedCurTime() then return end
 
     --local dlight = DynamicLight( self:GetOwner():EntIndex() )
     --if ( dlight ) then
@@ -122,6 +122,6 @@ function SWEP:Think()
     --    dlight.brightness = 0.1
     --    dlight.decay = 1024
     --    dlight.size = 128
-    --    dlight.dietime = CurTime() + 1
+    --    dlight.dietime = UnPredictedCurTime() + 1
     --end
 end

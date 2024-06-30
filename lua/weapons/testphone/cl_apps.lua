@@ -297,8 +297,8 @@ TabPhone.Apps["call"] = {
 			surface.DrawTexturedRect(w/2 - super/2, (((512+48)/2) - (40/2)) - (super/2), super, super)
 		end
 
-        local jiggy = (math.Round(math.sin(CurTime() * 2 * math.pi) * 2, 0) / 2) * 16
-        local jiggy2 = math.Round(math.sin(CurTime() * 28 * math.pi), 0) * 4
+        local jiggy = (math.Round(math.sin(UnPredictedCurTime() * 2 * math.pi) * 2, 0) / 2) * 16
+        local jiggy2 = math.Round(math.sin(UnPredictedCurTime() * 28 * math.pi), 0) * 4
 
 		surface.SetFont("TabPhone32")
 		local tsn = surface.GetTextSize(" INCOMING CALL ")
@@ -444,7 +444,7 @@ TabPhone.Apps["camera"] = {
 		TabMemory.CameraZoom = 1
 	end,
     Func_Primary = function()
-        if TabMemory.NextPhotoTime > CurTime() then return end
+        if TabMemory.NextPhotoTime > UnPredictedCurTime() then return end
 		local vangle = LocalPlayer():EyeAngles()
 
         if TabMemory.Flash then
@@ -457,7 +457,7 @@ TabPhone.Apps["camera"] = {
                 dlight.brightness = 1
                 dlight.decay = 0
                 dlight.size = 2048
-                dlight.dietime = CurTime() + 0.1
+                dlight.dietime = UnPredictedCurTime() + 0.1
             end
         end
 
@@ -548,8 +548,8 @@ TabPhone.Apps["camera"] = {
             render.PopRenderTarget()
         end)
 
-        TabMemory.NextPhotoTime = CurTime() + 1.1
-        camera_nextdraw = CurTime() + 1
+        TabMemory.NextPhotoTime = UnPredictedCurTime() + 1.1
+        camera_nextdraw = UnPredictedCurTime() + 1
     end,
     Func_Secondary = function()
         TabPhone.EnterApp("mainmenu")
@@ -565,7 +565,7 @@ TabPhone.Apps["camera"] = {
 		end
     end,
     Func_DrawScene = function()
-        if camera_nextdraw < CurTime() then
+        if camera_nextdraw < UnPredictedCurTime() then
             local rt = {
                 x = 0,
                 y = 0,
@@ -597,7 +597,7 @@ TabPhone.Apps["camera"] = {
 
             render.PopRenderTarget()
 
-            camera_nextdraw = CurTime() + 1 / camera_framerate
+            camera_nextdraw = UnPredictedCurTime() + 1 / camera_framerate
         end
     end,
     Func_Draw = function(w, h)
@@ -610,12 +610,12 @@ TabPhone.Apps["camera"] = {
 		local realbound = (512-48-40)
         surface.DrawTexturedRect(w/2 - realbound/2, ((512+48)/2 - (40/2)) - realbound/2, realbound, realbound)
 
-        if TabMemory.NextPhotoTime - 0.9 > CurTime() then
+        if TabMemory.NextPhotoTime - 0.9 > UnPredictedCurTime() then
             surface.SetDrawColor(0, 0, 0)
             surface.DrawRect(0, 0, w, h)
         end
 
-        if TabMemory.NextPhotoTime > CurTime() then return end
+        if TabMemory.NextPhotoTime > UnPredictedCurTime() then return end
         // rule of thirds !!!
         if TabMemory.Flash then
             surface.SetDrawColor(COL_FG)
