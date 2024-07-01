@@ -30,7 +30,7 @@ local SIGNAL_IMAGES = {
     IMAGE_CELL3
 }
 
-TabMemory = {
+TabMemory = TabMemory or {
     ActiveApp = false,
     --GallerySelected = 1,
     SelectedSetting = 1,

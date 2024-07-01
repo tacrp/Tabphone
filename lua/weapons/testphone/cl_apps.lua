@@ -1096,21 +1096,24 @@ TabPhone.Apps["gallery"] = {
             draw.SimpleText("NO PHOTOS", "TabPhone32", w / 2, (512 - 48) / 2 - (40 / 2), COL_BG, TEXT_ALIGN_CENTER)
         end
 
-        local page = math.floor(TabMemory.GallerySelected / 9)
+        local page = math.floor((TabMemory.GallerySelected-1) / 9)
         local maxpages = 16
-        local pagecount = math.floor(#cachedgalleryimages / 9)
+        local pagecount = math.ceil(#cachedgalleryimages / 9)
 
         for i, k in ipairs(cachedgalleryimages) do
             local sel = TabMemory.GallerySelected == i
             local mypage = math.floor(i / 9)
+			if i%9 == 0 then
+				mypage = mypage - 1
+			end
             if mypage ~= page then continue end
-            local s = i - (9 * mypage) + 1
-            local xslot = (s - 1) % 3
-            local yslot = math.ceil(s / 3)
-            local sw = 120
-            local sh = 120
-            local x = 10 + xslot * (sw + 10)
-            local y = -72 + yslot * (sh + 10)
+			local ti = i-1
+            local xslot = ((ti%3)-1)
+            local yslot = ((math.floor(ti/3)) % 3)-1
+            local sw = 128
+            local sh = 128
+            local x = (404/2) - (sw/2) + ((sw+4)*xslot)
+            local y = ((512-48)/2) + (40/2) - (sh/2) - 4 + ((sh+4)*yslot)
 
             if sel then
                 surface.SetDrawColor(0, 0, 0)
@@ -1131,7 +1134,7 @@ TabPhone.Apps["gallery"] = {
             draw.SimpleText(tostring(page + 1) .. "/" .. tostring(pagecount + 1), "TabPhone24", w / 2, h - 16 - 40 - 14, COL_BG, TEXT_ALIGN_CENTER)
         else
             for i = 1, pagecount do
-                local sel = (page % 19) + 1 == i
+                local sel = (page+1) == i
 
                 if sel then
                     surface.SetMaterial(radio_filled)
@@ -1140,7 +1143,7 @@ TabPhone.Apps["gallery"] = {
                 end
                 surface.SetDrawColor(COL_BG)
                 local x = (w / 2) - (pagecount * 20 / 2) + (i * 20) - 20
-                surface.DrawTexturedRect(x, h - 16 - 40 - 8, 16, 16)
+                surface.DrawTexturedRect(x, h - 40 - 24, 20, 20)
             end
         end
     end,
@@ -1185,9 +1188,6 @@ local image_options = {
     {
         label = "Set Profile",
         func = function()
-            // local image = cachedgalleryimages[TabMemory.GallerySelected]
-            // if not image then return end
-            // TabMemory.TempPFP = image.filename
             TabMemory.ContactsMode = "profile"
             TabPhone.EnterApp("contacts")
         end,
@@ -1217,22 +1217,34 @@ TabPhone.Apps["gallery_options"] = {
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
+		local superoff = -4 + 256 + 8
+		
+        local image = cachedgalleryimages[TabMemory.GallerySelected]
+        if not image then return end
+        if not image.material then
+            image.material = Material("data/arcrp_photos/" .. image.filename)
+        end
+
+        surface.SetMaterial(image.material)
+        surface.SetDrawColor(255, 255, 255)
+        surface.DrawTexturedRect(w/2 - 256/2, 48 + 4, 256, 256)
+
         for i, opt in ipairs(image_options) do
             local sel = i == TabMemory.SelectedImageOption
             surface.SetDrawColor(COL_BG)
 
             if sel then
-                surface.DrawRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52)
+                surface.DrawRect(8, superoff + ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52)
             else
-                surface.DrawOutlinedRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52, 4)
+                surface.DrawOutlinedRect(8, superoff + ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52, 4)
             end
 
-            draw.SimpleText(opt.label, "TabPhone32", 8 + 8 + 8 + 8 + 8 + 32, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
+            draw.SimpleText(opt.label, "TabPhone32", 8 + 8 + 8 + 8 + 8 + 32, superoff + ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
 
             if opt.icon then
                 surface.SetDrawColor(sel and COL_FG or COL_BG)
                 surface.SetMaterial(opt.icon)
-                surface.DrawTexturedRect(8 + 8 + 4 + 4, ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
+                surface.DrawTexturedRect(8 + 8 + 4 + 4, superoff + ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
             end
         end
     end,
@@ -1254,7 +1266,7 @@ TabPhone.Apps["gallery_deleter"] = {
         TabPhone.EnterApp("gallery")
     end,
     Func_Secondary = function()
-        TabPhone.EnterApp("gallery_viewer")
+        TabPhone.EnterApp("gallery_options")
     end,
     Func_Draw = function(w, h)
         TabMemory.LeftText = "CONFIRM"
@@ -1266,7 +1278,6 @@ TabPhone.Apps["gallery_deleter"] = {
         draw.SimpleText("be undone!!", "TabPhone24", w / 2, 80 + 24 + 24, COL_FG, TEXT_ALIGN_CENTER)
         local image = cachedgalleryimages[TabMemory.GallerySelected]
         if not image then return end
-
         if not image.material then
             image.material = Material("data/arcrp_photos/" .. image.filename)
         end
