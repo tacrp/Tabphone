@@ -19,9 +19,18 @@ end
 
 local BARRIER_FLIPPHONE = 404
 local IMAGE_BATTERY = Material("fesiug/TabPhone/battery.png")
-local IMAGE_CELL = Material("fesiug/TabPhone/cell2.png")
+local IMAGE_CELL0 = Material("fesiug/TabPhone/cell0.png")
+local IMAGE_CELL1 = Material("fesiug/TabPhone/cell1.png")
+local IMAGE_CELL2 = Material("fesiug/TabPhone/cell2.png")
+local IMAGE_CELL3 = Material("fesiug/TabPhone/cell3.png")
 
-TabMemory = TabMemory or {
+local SIGNAL_IMAGES = {
+    IMAGE_CELL1,
+    IMAGE_CELL2,
+    IMAGE_CELL3
+}
+
+TabMemory = {
     ActiveApp = false,
     --GallerySelected = 1,
     SelectedSetting = 1,
@@ -30,9 +39,13 @@ TabMemory = TabMemory or {
     TotalScroll = 0,
     SelectedPlayer = 1,
     TotalScrollContacts = 0,
-	CallEndTime = math.huge,
-	ClockStyle = false, -- 24 for true, 12 for false
-	YouDial = "",
+    CallEndTime = math.huge,
+    YouDial = "",
+    CellSignal = 3,
+    NextChangeSignal = 0,
+    SelectedImageOption = 1,
+    ProfilePictures = {},
+    ProfilePicturesMats = {}
 }
 
 function TabPhone.EnterApp(name)
@@ -42,7 +55,6 @@ function TabPhone.EnterApp(name)
     local active = TabMemory.ActiveApp
     TabPhone.Apps[active].Func_Enter(from)
 end
-
 
 function TabPhone.Scroll(level, var, total)
     if not TabMemory[var] then
@@ -60,9 +72,8 @@ function TabPhone.Scroll(level, var, total)
 end
 
 function SWEP:PreDrawViewModel(vm, wep, ply)
-	TabMemory.LeftText = "SELECT"
-	TabMemory.RightText = "BACK"
-
+    TabMemory.LeftText = "SELECT"
+    TabMemory.RightText = "BACK"
     render.PushRenderTarget(tex)
     cam.Start2D()
     surface.SetDrawColor(COL_FG)
@@ -80,11 +91,17 @@ function SWEP:PreDrawViewModel(vm, wep, ply)
     surface.DrawTexturedRect(BARRIER_FLIPPHONE - 8 - 64, 8, 64, 32)
     --draw.SimpleText( "24%", "TabPhone16", BARRIER_FLIPPHONE-8-64+10, 14, COL_FG, TEXT_ALIGN_RIGHT )
     surface.SetDrawColor(COL_FG)
-    surface.SetMaterial(IMAGE_CELL)
+    surface.SetMaterial(SIGNAL_IMAGES[TabMemory.CellSignal or 1])
     surface.DrawTexturedRect(8, 8, 32, 32)
+
+    if (TabMemory.NextChangeSignal or 0) < CurTime() then
+        TabMemory.CellSignal = math.random(1, #SIGNAL_IMAGES)
+
+        TabMemory.NextChangeSignal = CurTime() + math.Rand(10, 30)
+    end
+
     --draw.SimpleText( "OTER", "TabPhone16", 8+32+4, 14, COL_FG )
     local TimeString
-
     -- 24 hr
     local colon = ":"
 
@@ -92,7 +109,7 @@ function SWEP:PreDrawViewModel(vm, wep, ply)
         colon = " "
     end
 
-    if TabMemory.ClockStyle then
+    if GetConVar("tabphone_24h"):GetBool() then
         TimeString = os.date("%H" .. colon .. "%M", Timestamp)
     else
         TimeString = os.date("%I" .. colon .. "%M %p", Timestamp)
@@ -118,11 +135,8 @@ function SWEP:PostDrawViewModel(vm, ply, wep)
 end
 
 function SWEP:Think()
-
-	--print( TabMemory.CallStatus, TabMemory.CallStatus, TabMemory.CallStatus, TabMemory.CallStatus )
-
+    --print( TabMemory.CallStatus, TabMemory.CallStatus, TabMemory.CallStatus, TabMemory.CallStatus )
     if TabMemory.NextPhotoTime > UnPredictedCurTime() then return end
-
     --local dlight = DynamicLight( self:GetOwner():EntIndex() )
     --if ( dlight ) then
     --    dlight.pos = self:GetOwner():EyePos()

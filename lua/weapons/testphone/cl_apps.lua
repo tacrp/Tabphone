@@ -1,13 +1,13 @@
 local cameratex = GetRenderTarget("TabPhoneRTCam", 512, 512, false)
 local thumbtex = GetRenderTarget("TabPhoneRTCamThumb", 64, 64, false)
+
 local camMat = CreateMaterial("TabPhoneRTCam", "UnlitGeneric", {
     ["$basetexture"] = cameratex:GetName(),
 })
 
 local COL_FG = Color(76, 104, 79)
 local COL_BG = color_black
-local IMAGE_MESSAGE = Material("fesiug/TabPhone/message.png")
-
+local IMAGE_MESSAGE = Material("fesiug/tabphone/message.png")
 local BARRIER_FLIPPHONE = 404
 
 local function GetApps()
@@ -51,16 +51,19 @@ local function AppCount()
     return table.Count(Sortedapps)
 end
 
+local mat_profile = Material("fesiug/tabphone/profile.png")
+
 TabPhone.Apps = {}
 
 TabPhone.Apps["mainmenu"] = {
     Name = "Main Menu",
     Hidden = true,
-    Icon = Material("fesiug/TabPhone/contact.png"),
+    Icon = Material("fesiug/tabphone/contact.png"),
     SortOrder = 0,
     Func_Enter = function() end,
     Func_Primary = function()
         local Sortedapps = GetApps()
+        TabMemory.ProfileSetting = false
         TabPhone.EnterApp(Sortedapps[TabMemory.Selected])
     end,
     Func_Secondary = function()
@@ -76,31 +79,31 @@ TabPhone.Apps["mainmenu"] = {
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
-		TabMemory.RightText = "QUIT"
-		local Sortedapps = GetApps()
-		
-		-- Scroll math
-		local longestscroll = 0
+        TabMemory.RightText = "QUIT"
+        local Sortedapps = GetApps()
+        -- Scroll math
+        local longestscroll = 0
+
         for i, prev in ipairs(Sortedapps) do
             local sel = i == TabMemory.Selected
+            local Sy = ((i - 1) * (48 + 8)) + 48 + 8
 
-			local Sy = ((i - 1) * (48 + 8)) + 48 + 8
+            if Sy > (512 - 48 - 40) then
+                longestscroll = math.max(-((512 - 48 - 40 - 8) - Sy), longestscroll)
+            end
 
-			if Sy > (512-48-40) then
-				longestscroll = math.max( -((512-48-40-8)-Sy), longestscroll )
-			end
-			
-			if sel then
-				if (Sy+TabMemory.TotalScroll) > (512-48-40) then
-					TabMemory.TotalScroll = (512-48-40-8)-Sy
-				elseif (Sy+TabMemory.TotalScroll) <= (48+8) then
-					TabMemory.TotalScroll = (48+8)-Sy
-				end
-			end
-		end
-		local TotalScroll = TabMemory.TotalScroll
+            if sel then
+                if (Sy + TabMemory.TotalScroll) > (512 - 48 - 40) then
+                    TabMemory.TotalScroll = (512 - 48 - 40 - 8) - Sy
+                elseif (Sy + TabMemory.TotalScroll) <= (48 + 8) then
+                    TabMemory.TotalScroll = (48 + 8) - Sy
+                end
+            end
+        end
 
-		-- App logic
+        local TotalScroll = TabMemory.TotalScroll
+
+        -- App logic
         for i, prev in ipairs(Sortedapps) do
             local v = TabPhone.Apps[prev]
             local sel = i == TabMemory.Selected
@@ -118,129 +121,192 @@ TabPhone.Apps["mainmenu"] = {
             surface.DrawTexturedRect(8 + 8 + 4 + 4, TotalScroll + ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
         end
 
-		-- Scroll logic
-		local fulllength = 512-48-40-8-8
-		local annoyingmath = (512-48-40-8)/((512-48-40-8)-longestscroll)
-		local length = fulllength / annoyingmath
+        -- Scroll logic
+        local fulllength = 512 - 48 - 40 - 8 - 8
+        local annoyingmath = (512 - 48 - 40 - 8) / ((512 - 48 - 40 - 8) - longestscroll)
+        local length = fulllength / annoyingmath
+        local s_per
 
-		local s_per
-		if longestscroll <= 0 then
-			s_per = 0
-		else
-			s_per = (-TotalScroll)/(longestscroll)
-		end
+        if longestscroll <= 0 then
+            s_per = 0
+        else
+            s_per = (-TotalScroll) / longestscroll
+        end
 
-		local endpos = ((48+8) + (512-48-40-8-4)*s_per) - length*s_per
-
-		surface.SetDrawColor( COL_BG )
-		surface.DrawRect( BARRIER_FLIPPHONE-12, endpos, 6, length )
+        local endpos = ((48 + 8) + (512 - 48 - 40 - 8 - 4) * s_per) - length * s_per
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(BARRIER_FLIPPHONE - 12, endpos, 6, length)
     end,
 }
 
-local playershiz = {}
+local cachedplayers = {}
+
+local pfpdatafile = "arcrp_pfp.dat"
+
+local function savepfps()
+    local json = util.TableToJSON(TabMemory.ProfilePictures)
+
+    file.Write(pfpdatafile, json)
+end
+
+local function loadpfps()
+    if not file.Exists(pfpdatafile, "DATA") then return end
+
+    local content = file.Read(pfpdatafile, "DATA")
+
+    TabMemory.ProfilePictures = util.JSONToTable(content)
+end
+
+local function GetProfilePic(ply)
+    if not IsValid(ply) then return end
+
+    local index = "SteamID:" .. tostring(ply:SteamID64())
+
+    if TabMemory.ProfilePicturesMats[index] then
+        return TabMemory.ProfilePicturesMats[index]
+    end
+
+    local pfp = TabMemory.ProfilePictures[index]
+    if pfp then
+        if file.Exists("arcrp_photos/" .. pfp, "DATA") then
+            TabMemory.ProfilePicturesMats[index] = Material("data/arcrp_photos/" .. pfp)
+        else
+            return nil
+        end
+    end
+
+    return TabMemory.ProfilePicturesMats[index]
+end
 
 TabPhone.Apps["contacts"] = {
     Name = "Contacts",
-    Icon = Material("fesiug/TabPhone/contact.png"),
+    Icon = Material("fesiug/tabphone/contact.png"),
     SortOrder = -1009,
-    Func_Enter = function() end,
+    Func_Enter = function()
+        loadpfps()
+    end,
     Func_Primary = function()
-		net.Start("Tabphone_Call_Send")
-			net.WriteString(playershiz[TabMemory.SelectedPlayer].Entity:SteamID64())
-		net.SendToServer()
-		TabPhone.EnterApp("active_call")
-        LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, 1, CHAN_STATIC)
-	end,
+        if TabMemory.ProfileSetting then
+            local image = cachedgalleryimages[TabMemory.GallerySelected]
+            if not image then return end
+            local index = "SteamID:" .. tostring(cachedplayers[TabMemory.SelectedPlayer].Entity:SteamID64())
+            TabMemory.ProfilePictures[index] = image.filename
+            TabMemory.ProfilePicturesMats[index] = nil
+            TabMemory.ProfileSetting = false
+            savepfps()
+            TabPhone.EnterApp("gallery")
+        else
+            net.Start("Tabphone_Call_Send")
+            net.WriteString(cachedplayers[TabMemory.SelectedPlayer].Entity:SteamID64())
+            net.SendToServer()
+            TabPhone.EnterApp("active_call")
+            LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, 1, CHAN_STATIC)
+        end
+    end,
     Func_Secondary = function()
-		TabPhone.EnterApp("mainmenu")
+        if TabMemory.ProfileSetting then
+            TabMemory.ProfileSetting = false
+            TabPhone.EnterApp("gallery_options")
+        else
+            TabPhone.EnterApp("mainmenu")
+        end
     end,
     Func_Scroll = function(level)
-        TabPhone.Scroll(level, "SelectedPlayer", #playershiz)
-	end,
+        TabPhone.Scroll(level, "SelectedPlayer", #cachedplayers)
+    end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
-		TabMemory.LeftText = ""
-		playershiz = {}
+        TabMemory.LeftText = ""
+        cachedplayers = {}
+
         for i, v in player.Iterator() do
-			local pd = { Entity = v, Name = v:Nick() }
-			if TabMemory.TempPFP then
-				pd.Icon = Material("data/arcrp_photos/thumbs/" .. TabMemory.TempPFP)
-			end
-			table.insert( playershiz, pd )
+            local pd = {
+                Entity = v,
+                Name = v:Nick(),
+                Icon = GetProfilePic(v)
+            }
+
+            table.insert(cachedplayers, pd)
         end
 
-		-- Scroll math
-		local longestscroll = 0
-        for i, prev in ipairs(playershiz) do
+        -- Scroll math
+        local longestscroll = 0
+
+        for i, prev in ipairs(cachedplayers) do
             local sel = i == TabMemory.SelectedPlayer
+            local Sy = ((i - 1) * (96 + 8)) + 8
+            local Sh = 96
+            local Ty = Sy + Sh
 
-			local Sy = ((i - 1) * (96+8))+8
-			local Sh = 96
-			local Ty = Sy+Sh
+            if Ty > (512 - 48 - 40) then
+                longestscroll = math.max(-((512 - 48 - 40 - 8) - Ty), longestscroll)
+            end
 
-			if Ty > (512-48-40) then
-				longestscroll = math.max( -((512-48-40-8)-Ty), longestscroll )
-			end
-			
-			if sel then
-				if (Ty+TabMemory.TotalScrollContacts) > (512-48-40) then
-					TabMemory.TotalScrollContacts = (512-48-40-8)-Ty
-				elseif (Sy+TabMemory.TotalScrollContacts) <= (48+8) then
-					TabMemory.TotalScrollContacts = math.min( 0, (48+8)-Sy )
-				end
-			end
-		end
-		local TotalScroll = TabMemory.TotalScrollContacts
+            if sel then
+                if (Ty + TabMemory.TotalScrollContacts) > (512 - 48 - 40) then
+                    TabMemory.TotalScrollContacts = (512 - 48 - 40 - 8) - Ty
+                elseif (Sy + TabMemory.TotalScrollContacts) <= (48 + 8) then
+                    TabMemory.TotalScrollContacts = math.min(0, (48 + 8) - Sy)
+                end
+            end
+        end
 
-		-- App logic
-        for i, v in ipairs(playershiz) do
-			local sel = i == TabMemory.SelectedPlayer
+        local TotalScroll = TabMemory.TotalScrollContacts
+
+        -- App logic
+        for i, v in ipairs(cachedplayers) do
+            local sel = i == TabMemory.SelectedPlayer
             surface.SetDrawColor(COL_BG)
 
             if sel then
-                surface.DrawRect(8, TotalScroll + ((i - 1) * (96+8))+48+8, BARRIER_FLIPPHONE-8-8-8, 96)
-				if v.Entity == LocalPlayer() then
-					TabMemory.LeftText = ""
-				else
-					TabMemory.LeftText = "CALL"
-				end
+                surface.DrawRect(8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8 - 8, 96)
+
+                if v.Entity == LocalPlayer() then
+                    TabMemory.LeftText = ""
+                else
+                    if TabMemory.ProfileSetting then
+                        TabMemory.LeftText = "SET"
+                    else
+                        TabMemory.LeftText = "CALL"
+                    end
+                end
             else
-                surface.DrawOutlinedRect(8, TotalScroll + ((i - 1) * (96+8))+48+8, BARRIER_FLIPPHONE-8-8-8, 96, 4)
+                surface.DrawOutlinedRect(8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8 - 8, 96, 4)
             end
 
-            draw.SimpleText(v.Name, "TabPhone32", 8+96+8, TotalScroll + ((i - 1) * (96+8))+48+8+8, sel and COL_FG or COL_BG)
-			draw.SimpleText(v.Entity:SteamID64(), "TabPhone16", (BARRIER_FLIPPHONE-16-8), TotalScroll + ((i - 1) * (96+8))+48+8+8 + (96-8-8 - 16), sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
-			if v.Icon then
-				surface.SetDrawColor(255, 255, 255)
-				surface.SetMaterial(v.Icon)
-				surface.DrawTexturedRect(8, TotalScroll + ((i - 1) * (96+8))+48+8, 96, 96)
-				surface.SetDrawColor(COL_BG)
-				surface.DrawOutlinedRect(8, TotalScroll + ((i - 1) * (96+8))+48+8, 96, 96, 4)
-			end
+            draw.SimpleText(v.Name, "TabPhone32", 8 + 96 + 8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
+            draw.SimpleText(v.Entity:SteamID64(), "TabPhone16", BARRIER_FLIPPHONE - 16 - 8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8 + 8 + (96 - 8 - 8 - 16), sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
+
+            if v.Icon then
+                surface.SetDrawColor(255, 255, 255)
+                surface.SetMaterial(v.Icon)
+                surface.DrawTexturedRect(8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8, 96, 96)
+                surface.SetDrawColor(COL_BG)
+                surface.DrawOutlinedRect(8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8, 96, 96, 4)
+            end
         end
 
-		-- Scroll logic
-		local fulllength = 512-48-40-8-8
-		local annoyingmath = (512-48-40-8)/((512-48-40-8)-longestscroll)
-		local length = fulllength / annoyingmath
+        -- Scroll logic
+        local fulllength = 512 - 48 - 40 - 8 - 8
+        local annoyingmath = (512 - 48 - 40 - 8) / ((512 - 48 - 40 - 8) - longestscroll)
+        local length = fulllength / annoyingmath
+        local s_per
 
-		local s_per
-		if longestscroll <= 0 then
-			s_per = 0
-		else
-			s_per = (-TotalScroll)/(longestscroll)
-		end
+        if longestscroll <= 0 then
+            s_per = 0
+        else
+            s_per = (-TotalScroll) / longestscroll
+        end
 
-		local endpos = ((48+8) + (512-48-40-8-4)*s_per) - length*s_per
-
-		surface.SetDrawColor( COL_BG )
-		surface.DrawRect( BARRIER_FLIPPHONE-12, endpos, 6, length )
+        local endpos = ((48 + 8) + (512 - 48 - 40 - 8 - 4) * s_per) - length * s_per
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(BARRIER_FLIPPHONE - 12, endpos, 6, length)
     end,
 }
 
 TabPhone.Apps["messages"] = {
     Name = "Messages",
-    Icon = Material("fesiug/TabPhone/message.png"),
+    Icon = Material("fesiug/tabphone/message.png"),
     SortOrder = -1008,
     Func_Enter = function() end,
     Func_Scroll = function() end,
@@ -250,40 +316,40 @@ TabPhone.Apps["messages"] = {
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
-		surface.SetDrawColor( COL_BG )
-		surface.DrawRect( 0, 48, 512, 48+4+4 )
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(0, 48, 512, 48 + 4 + 4)
 
-		if TabMemory.TempPFP then
-			surface.SetMaterial( Material("data/arcrp_photos/thumbs/" .. TabMemory.TempPFP) )
-			surface.SetDrawColor(255, 255, 255)
-			surface.DrawTexturedRect(4, 48+4, 48, 48)
-		end
+        if TabMemory.TempPFP then
+            surface.SetMaterial(Material("data/arcrp_photos/thumbs/" .. TabMemory.TempPFP))
+            surface.SetDrawColor(255, 255, 255)
+            surface.DrawTexturedRect(4, 48 + 4, 48, 48)
+        end
 
-        draw.SimpleText("Alice", "TabPhone24", 8+48+8 + 4, 8 + 48 + 4, COL_FG )
+        draw.SimpleText("Alice", "TabPhone24", 8 + 48 + 8 + 4, 8 + 48 + 4, COL_FG)
 
-		do
-			surface.SetFont("TabPhone24")
-			local ts = "'jeff the kill' you"
-			local tsn = surface.GetTextSize(ts)
-			surface.SetDrawColor( COL_BG )
-			surface.DrawRect( w-8-tsn, 512-40-8-(24+4+4), tsn, 24+4+4 )
-			draw.SimpleText( ts, "TabPhone24", w-8-tsn, 512-40-8-(24+4), COL_FG )
-		end
+        do
+            surface.SetFont("TabPhone24")
+            local ts = "'jeff the kill' you"
+            local tsn = surface.GetTextSize(ts)
+            surface.SetDrawColor(COL_BG)
+            surface.DrawRect(w - 8 - tsn, 512 - 40 - 8 - (24 + 4 + 4), tsn, 24 + 4 + 4)
+            draw.SimpleText(ts, "TabPhone24", w - 8 - tsn, 512 - 40 - 8 - (24 + 4), COL_FG)
+        end
 
-		do
-			surface.SetFont("TabPhone24")
-			local ts = "'jeff the kill' you"
-			local tsn = surface.GetTextSize(ts)
-			surface.SetDrawColor( COL_BG )
-			surface.DrawRect( 8, 512-40-8-(24+4+4)-8-(24+4+4), tsn, 24+4+4 )
-			draw.SimpleText( ts, "TabPhone24", 8, 512-40-8-(24+4+4)-8-(24+4), COL_FG )
-		end
+        do
+            surface.SetFont("TabPhone24")
+            local ts = "'jeff the kill' you"
+            local tsn = surface.GetTextSize(ts)
+            surface.SetDrawColor(COL_BG)
+            surface.DrawRect(8, 512 - 40 - 8 - (24 + 4 + 4) - 8 - (24 + 4 + 4), tsn, 24 + 4 + 4)
+            draw.SimpleText(ts, "TabPhone24", 8, 512 - 40 - 8 - (24 + 4 + 4) - 8 - (24 + 4), COL_FG)
+        end
     end,
 }
 
 TabPhone.Apps["jobs"] = {
     Name = "Jobs",
-    Icon = Material("fesiug/TabPhone/job.png"),
+    Icon = Material("fesiug/tabphone/job.png"),
     SortOrder = -1007,
     Func_Enter = function() end,
     Func_Primary = function() end,
@@ -300,9 +366,9 @@ TabPhone.Apps["jobs"] = {
 
 TabPhone.Apps["calendar"] = {
     Name = "Calendar",
-    Icon = Material("fesiug/TabPhone/calendar.png"),
+    Icon = Material("fesiug/tabphone/calendar.png"),
     SortOrder = -1006,
-	Hidden = true,
+    Hidden = true,
     Func_Enter = function() end,
     Func_Primary = function() end,
     Func_Secondary = function()
@@ -314,41 +380,41 @@ TabPhone.Apps["calendar"] = {
 
 TabPhone.Apps["dialer"] = {
     Name = "Dialer",
-    Icon = Material("fesiug/TabPhone/phone.png"),
+    Icon = Material("fesiug/tabphone/phone.png"),
     SortOrder = -1006,
     Func_Enter = function()
-		TabMemory.YouDial = ""
-	end,
+        TabMemory.YouDial = ""
+    end,
     Func_Primary = function()
-		net.Start("Tabphone_Call_Send")
-			net.WriteString(TabMemory.YouDial)
-		net.SendToServer()
-		TabPhone.EnterApp("active_call")
+        net.Start("Tabphone_Call_Send")
+        net.WriteString(TabMemory.YouDial)
+        net.SendToServer()
+        TabPhone.EnterApp("active_call")
         LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, 1, CHAN_STATIC)
-	end,
+    end,
     Func_Secondary = function()
         TabPhone.EnterApp("mainmenu")
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
-		TabMemory.LeftText = "CALL"
-		local YOUDIAL = TabMemory.YouDial or ""
-		draw.SimpleText(YOUDIAL, "TabPhone48", BARRIER_FLIPPHONE-4, 48+48, COL_BG, TEXT_ALIGN_RIGHT)
-		draw.SimpleText("USE NUMROW OR NUMPAD", "TabPhone24", BARRIER_FLIPPHONE/2, 48+12, COL_BG, TEXT_ALIGN_CENTER)
+        TabMemory.LeftText = "CALL"
+        local YOUDIAL = TabMemory.YouDial or ""
+        draw.SimpleText(YOUDIAL, "TabPhone48", BARRIER_FLIPPHONE - 4, 48 + 48, COL_BG, TEXT_ALIGN_RIGHT)
+        draw.SimpleText("USE NUMROW OR NUMPAD", "TabPhone24", BARRIER_FLIPPHONE / 2, 48 + 12, COL_BG, TEXT_ALIGN_CENTER)
 
-		if (CurTime()*2)%1 > 0.5 then
-			surface.SetFont("TabPhone48")
-			local tsn = surface.GetTextSize("8")
-			surface.SetDrawColor( COL_BG )
-			surface.DrawRect( BARRIER_FLIPPHONE-4-(tsn+6), 48+48, (tsn+6), 48+6 )
-			draw.SimpleText(YOUDIAL:Right(1), "TabPhone48", BARRIER_FLIPPHONE-4, 48+48, COL_FG, TEXT_ALIGN_RIGHT)
-		end
-	end,
+        if (CurTime() * 2) % 1 > 0.5 then
+            surface.SetFont("TabPhone48")
+            local tsn = surface.GetTextSize("8")
+            surface.SetDrawColor(COL_BG)
+            surface.DrawRect(BARRIER_FLIPPHONE - 4 - (tsn + 6), 48 + 48, tsn + 6, 48 + 6)
+            draw.SimpleText(YOUDIAL:Right(1), "TabPhone48", BARRIER_FLIPPHONE - 4, 48 + 48, COL_FG, TEXT_ALIGN_RIGHT)
+        end
+    end,
 }
 
 TabPhone.Apps["shopping"] = {
     Name = "Shopping",
-    Icon = Material("fesiug/TabPhone/shopper.png"),
+    Icon = Material("fesiug/tabphone/shopper.png"),
     SortOrder = -1006,
     Func_Enter = function() end,
     Func_Primary = function() end,
@@ -361,140 +427,144 @@ TabPhone.Apps["shopping"] = {
 
 TabPhone.Apps["call"] = {
     Name = "Receiving Call",
-    Icon = Material("fesiug/TabPhone/phone.png"),
+    Icon = Material("fesiug/tabphone/phone.png"),
     SortOrder = 0,
-	Hidden = true,
-    Func_Enter = function()
-    end,
+    Hidden = true,
+    Func_Enter = function() end,
     Func_Holster = function()
-		TabPhone.EndRingtone()
+        TabPhone.EndRingtone()
         TabPhone.EnterApp("mainmenu")
     end,
     Func_Primary = function()
-		TabPhone.EndRingtone()
-		TabPhone.EnterApp("active_call")
-		net.Start("Tabphone_Call_Accept")
-		net.SendToServer()
-	end,
+        TabPhone.EndRingtone()
+        TabPhone.EnterApp("active_call")
+        net.Start("Tabphone_Call_Accept")
+        net.SendToServer()
+    end,
     Func_Secondary = function()
-		TabPhone.EndRingtone()
+        TabPhone.EndRingtone()
         TabPhone.EnterApp("mainmenu")
-	end,
+    end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
-		TabMemory.LeftText = "ANSWER"
-		TabMemory.RightText = "DECLINE"
+        TabMemory.LeftText = "ANSWER"
+        TabMemory.RightText = "DECLINE"
         surface.SetDrawColor(COL_FG)
         surface.DrawRect(0, 0, 512, 512)
-		
-		if TabMemory.TempPFP then
-			surface.SetMaterial( Material("data/arcrp_photos/" .. TabMemory.TempPFP) )
-			surface.SetDrawColor(255, 255, 255)
-			local super = (512-48-40)
-			surface.DrawTexturedRect(w/2 - super/2, (((512+48)/2) - (40/2)) - (super/2), super, super)
-		end
+
+        if TabMemory.TempPFP then
+            surface.SetMaterial(Material("data/arcrp_photos/" .. TabMemory.TempPFP))
+            surface.SetDrawColor(255, 255, 255)
+            local super = 512 - 48 - 40
+            surface.DrawTexturedRect(w / 2 - super / 2, (((512 + 48) / 2) - (40 / 2)) - (super / 2), super, super)
+        end
 
         local jiggy = (math.Round(math.sin(UnPredictedCurTime() * 2 * math.pi) * 2, 0) / 2) * 16
         local jiggy2 = math.Round(math.sin(UnPredictedCurTime() * 28 * math.pi), 0) * 4
-
-		surface.SetFont("TabPhone32")
-		local tsn = surface.GetTextSize(" INCOMING CALL ")
+        surface.SetFont("TabPhone32")
+        local tsn = surface.GetTextSize(" INCOMING CALL ")
         surface.SetDrawColor(COL_FG)
-        surface.DrawRect((BARRIER_FLIPPHONE / 2) + jiggy - tsn/2, 64 + 16 + jiggy2, tsn, 32+4+4)
-		local tsn = surface.GetTextSize(" Bank of Siple ")
-        surface.DrawRect((BARRIER_FLIPPHONE / 2) - tsn/2, 64 + 72, tsn, 32+4+4)
-		
+        surface.DrawRect((BARRIER_FLIPPHONE / 2) + jiggy - tsn / 2, 64 + 16 + jiggy2, tsn, 32 + 4 + 4)
+        local tsn = surface.GetTextSize(" Bank of Siple ")
+        surface.DrawRect((BARRIER_FLIPPHONE / 2) - tsn / 2, 64 + 72, tsn, 32 + 4 + 4)
         draw.SimpleText("INCOMING CALL", "TabPhone32", (BARRIER_FLIPPHONE / 2) + jiggy, 64 + 16 + jiggy2, COL_BG, TEXT_ALIGN_CENTER)
-		
-		local nick = "[???????]"
-		if TabMemory.CallingPlayer and TabMemory.CallingPlayer:IsValid() then
-			nick = TabMemory.CallingPlayer:Nick()
-		end
+        local nick = "[???????]"
+
+        if TabMemory.CallingPlayer and TabMemory.CallingPlayer:IsValid() then
+            nick = TabMemory.CallingPlayer:Nick()
+        end
+
         draw.SimpleText(nick, "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + 72, COL_BG, TEXT_ALIGN_CENTER)
     end,
 }
 
 TabPhone.Apps["active_call"] = {
     Name = "Active Call",
-    Icon = Material("fesiug/TabPhone/phone.png"),
+    Icon = Material("fesiug/tabphone/phone.png"),
     SortOrder = 0,
-	Hidden = true,
+    Hidden = true,
     Func_Enter = function()
-		TabMemory.CallStartTime = UnPredictedCurTime()
-		TabMemory.CallEndTime = math.huge
+        TabMemory.CallStartTime = UnPredictedCurTime()
+        TabMemory.CallEndTime = math.huge
     end,
-    Func_Primary = function()
-	end,
+    Func_Primary = function() end,
     Func_Secondary = function()
         LocalPlayer():StopSound(TabPhone.GetRingtonePath())
-		net.Start("Tabphone_Call_HangUp")
-		net.SendToServer()
+        net.Start("Tabphone_Call_HangUp")
+        net.SendToServer()
         TabPhone.EnterApp("mainmenu")
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
-		if ((TabMemory.CallEndTime or math.huge)+1 <= CurTime()) then TabPhone.EnterApp("mainmenu") return end
-		TabMemory.LeftText = ""
-		TabMemory.RightText = "HANG UP"
+        if (TabMemory.CallEndTime or math.huge) + 1 <= CurTime() then
+            TabPhone.EnterApp("mainmenu")
+
+            return
+        end
+
+        TabMemory.LeftText = ""
+        TabMemory.RightText = "HANG UP"
         surface.SetDrawColor(COL_FG)
         surface.DrawRect(0, 0, 512, 512)
-		
-		if TabMemory.TempPFP then
-			surface.SetMaterial( Material("data/arcrp_photos/" .. TabMemory.TempPFP) )
-			surface.SetDrawColor(255, 255, 255)
-			local super = (512-48-40)
-			surface.DrawTexturedRect(w/2 - super/2, (((512+48)/2) - (40/2)) - (super/2), super, super)
-		end
 
-		local calllength = ""--
-		if TabMemory.CallStatus == "incall" then
-			local mrew = string.FormattedTime( UnPredictedCurTime()-TabMemory.CallStartTime )
-			calllength = string.format( "%02i:%02i:%02i", mrew.h, mrew.m, mrew.s )
-		elseif TabMemory.CallStatus == "calling" then
-			calllength = "Calling..."
-		elseif TabMemory.CallStatus == "busy" then
-			calllength = "BUSY"
-		elseif TabMemory.CallStatus == "callended" then
-			calllength = "CALL ENDED"
-		else
-			calllength = "...??"
-		end
+        local pfp = GetProfilePic(TabMemory.CallingPlayer)
 
-		surface.SetFont("TabPhone32")
-		local tsn = surface.GetTextSize(" "..calllength.." ")
-		surface.SetDrawColor(COL_FG)
-		surface.DrawRect((BARRIER_FLIPPHONE / 2) - tsn/2, 64 + 72, tsn, 32+4+4)
-		draw.SimpleText(calllength, "TabPhone32", (BARRIER_FLIPPHONE / 2), 64 + 72, COL_BG, TEXT_ALIGN_CENTER)
-		
-		surface.SetFont("TabPhone32")
-		surface.SetDrawColor(COL_FG)
-		local nick = "[???????]"
-		if TabMemory.CallingPlayer and TabMemory.CallingPlayer:IsValid() then
-			nick = TabMemory.CallingPlayer:Nick()
-		end
-		local tsn = surface.GetTextSize(" " .. nick .. " ")
-        surface.DrawRect((BARRIER_FLIPPHONE / 2) - tsn/2, 64 + 16, tsn, 32+4+4)
+        if pfp then
+            surface.SetMaterial(pfp)
+            surface.SetDrawColor(255, 255, 255)
+            local super = 512 - 48 - 40
+            surface.DrawTexturedRect(w / 2 - super / 2, (((512 + 48) / 2) - (40 / 2)) - (super / 2), super, super)
+        end
+
+        local calllength = "" --
+
+        if TabMemory.CallStatus == "incall" then
+            local mrew = string.FormattedTime(UnPredictedCurTime() - TabMemory.CallStartTime)
+            calllength = string.format("%02i:%02i:%02i", mrew.h, mrew.m, mrew.s)
+        elseif TabMemory.CallStatus == "calling" then
+            calllength = "Calling..."
+        elseif TabMemory.CallStatus == "busy" then
+            calllength = "BUSY"
+        elseif TabMemory.CallStatus == "callended" then
+            calllength = "CALL ENDED"
+        else
+            calllength = "...??"
+        end
+
+        surface.SetFont("TabPhone32")
+        local tsn = surface.GetTextSize(" " .. calllength .. " ")
+        surface.SetDrawColor(COL_FG)
+        surface.DrawRect((BARRIER_FLIPPHONE / 2) - tsn / 2, 64 + 72, tsn, 32 + 4 + 4)
+        draw.SimpleText(calllength, "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + 72, COL_BG, TEXT_ALIGN_CENTER)
+        surface.SetFont("TabPhone32")
+        surface.SetDrawColor(COL_FG)
+        local nick = "[???????]"
+
+        if TabMemory.CallingPlayer and TabMemory.CallingPlayer:IsValid() then
+            nick = TabMemory.CallingPlayer:Nick()
+        end
+
+        local tsn = surface.GetTextSize(" " .. nick .. " ")
+        surface.DrawRect((BARRIER_FLIPPHONE / 2) - tsn / 2, 64 + 16, tsn, 32 + 4 + 4)
         draw.SimpleText(nick, "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + 16, COL_BG, TEXT_ALIGN_CENTER)
-		
-		--local voicesize = Entity(2):VoiceVolume()*100*10
-		--surface.SetDrawColor(COL_BG)
-        --surface.DrawRect((BARRIER_FLIPPHONE / 2) - voicesize/2, 256 - voicesize/2, voicesize, voicesize)
     end,
 }
 
+--local voicesize = Entity(2):VoiceVolume()*100*10
+--surface.SetDrawColor(COL_BG)
+--surface.DrawRect((BARRIER_FLIPPHONE / 2) - voicesize/2, 256 - voicesize/2, voicesize, voicesize)
 local settings_options = {
     {
         label = "Ringtone",
-        icon = Material("fesiug/TabPhone/phone.png"),
+        icon = Material("fesiug/tabphone/phone.png"),
         min = 1,
-        max = function()
-            return #TabPhone.Ringtones
-        end,
+        max = function() return #TabPhone.Ringtones end,
         convar = GetConVar("tabphone_ringtone"),
         func_change = function(val)
             if TabMemory.RingToneExample then
                 TabMemory.RingToneExample:Stop()
             end
+
             local sound = TabPhone.RingtonePath .. TabPhone.Ringtones[val]
             TabMemory.RingToneExample = CreateSound(LocalPlayer(), sound)
             TabMemory.RingToneExample:Play()
@@ -502,16 +572,17 @@ local settings_options = {
         type = "int",
     },
     {
-        label = "24-Hour Clock",
-        icon = Material("fesiug/TabPhone/clock.png"),
+        label = "24h Time",
+        icon = Material("fesiug/tabphone/clock.png"),
         type = "bool",
-		var = "ClockStyle",
+        convar = GetConVar("tabphone_24h")
     },
     {
         label = "Back",
         type = "func",
         func_change = function()
             TabPhone.EnterApp("mainmenu")
+
             if TabMemory.RingToneExample then
                 TabMemory.RingToneExample:Stop()
             end
@@ -521,54 +592,53 @@ local settings_options = {
 
 local function changeOption(level)
     local opt = settings_options[TabMemory.SelectedSetting]
+    if not opt then return end
 
-        if not opt then return end
+    if opt.type == "int" then
+        local val = opt.convar:GetInt()
+        local min = opt.min
+        local max = opt.max
 
-        if opt.type == "int" then
-            local val = opt.convar:GetInt()
-            local min = opt.min
-            local max = opt.max
-
-            if isfunction(min) then
-                min = min()
-            end
-
-            if isfunction(max) then
-                max = max()
-            end
-
-            val = val + level
-
-            if val > max then
-                val = min
-            elseif val < min then
-                val = max
-            end
-
-            opt.convar:SetInt(val)
-
-            if isfunction(opt.func_change) then
-                opt.func_change(val)
-            end
-		elseif opt.type == "bool" then
-			if !TabMemory[opt.var] then
-				TabMemory[opt.var] = false
-			end
-
-			TabMemory[opt.var] = !TabMemory[opt.var]
-			if opt.convar then
-				opt.convar:SetBool( TabMemory[opt.var] )
-			end
-        else
-            if isfunction(opt.func_change) then
-                opt.func_change()
-            end
+        if isfunction(min) then
+            min = min()
         end
+
+        if isfunction(max) then
+            max = max()
+        end
+
+        val = val + level
+
+        if val > max then
+            val = min
+        elseif val < min then
+            val = max
+        end
+
+        opt.convar:SetInt(val)
+
+        if isfunction(opt.func_change) then
+            opt.func_change(val)
+        end
+    elseif opt.type == "bool" then
+        local var = opt.convar:GetBool()
+
+        if opt.convar then
+            opt.convar:SetBool(not var)
+        end
+    else
+        if isfunction(opt.func_change) then
+            opt.func_change()
+        end
+    end
 end
+
+local radio_empty = Material("fesiug/tabphone/radio_empty.png")
+local radio_filled = Material("fesiug/tabphone/radio_filled.png")
 
 TabPhone.Apps["settings"] = {
     Name = "Settings",
-    Icon = Material("fesiug/TabPhone/settings.png"),
+    Icon = Material("fesiug/tabphone/settings.png"),
     SortOrder = -1005,
     Func_Enter = function() end,
     Func_Primary = function()
@@ -578,7 +648,7 @@ TabPhone.Apps["settings"] = {
         TabPhone.Scroll(level, "SelectedSetting", #settings_options)
     end,
     Func_Secondary = function()
-        // TabPhone.EnterApp("mainmenu")
+        -- TabPhone.EnterApp("mainmenu")
         changeOption(-1)
     end,
     Func_Reload = function() end,
@@ -589,10 +659,11 @@ TabPhone.Apps["settings"] = {
 
             if sel then
                 surface.DrawRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52)
-				if opt.type == "int" then
-					TabMemory.LeftText = "NEXT"
-					TabMemory.RightText = "PREVIOUS"
-				end
+
+                if opt.type == "int" then
+                    TabMemory.LeftText = "NEXT"
+                    TabMemory.RightText = "PREVIOUS"
+                end
             else
                 surface.DrawOutlinedRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52, 4)
             end
@@ -607,8 +678,17 @@ TabPhone.Apps["settings"] = {
 
             if opt.type == "int" then
                 local val = opt.convar:GetInt()
-
                 draw.SimpleText(tostring(val), "TabPhone32", w - 8 - 8 - 4 - 4, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
+            elseif opt.type == "bool" then
+                local val = opt.convar:GetBool()
+
+                if val then
+                    surface.SetMaterial(radio_filled)
+                else
+                    surface.SetMaterial(radio_empty)
+                end
+                surface.SetDrawColor(sel and COL_FG or COL_BG)
+                surface.DrawTexturedRect(w - 32 - 24, ((i - 1) * (48 + 8)) + 64 + 2, 32, 32)
             end
         end
     end,
@@ -616,25 +696,25 @@ TabPhone.Apps["settings"] = {
 
 local camera_nextdraw = 0
 local camera_framerate = 15
-
 local pattern = Material("pp/texturize/plain.png")
-local flashmat = Material("fesiug/TabPhone/flash.png")
-local noflashmat = Material("fesiug/TabPhone/noflash.png")
+local flashmat = Material("fesiug/tabphone/flash.png")
+local noflashmat = Material("fesiug/tabphone/noflash.png")
 
 TabPhone.Apps["camera"] = {
     Name = "Camera",
-    Icon = Material("fesiug/TabPhone/camera.png"),
+    Icon = Material("fesiug/tabphone/camera.png"),
     SortOrder = -1020,
     Func_Enter = function()
-		TabMemory.CameraZoom = 1
-	end,
+        TabMemory.CameraZoom = 1
+    end,
     Func_Primary = function()
         if TabMemory.NextPhotoTime > UnPredictedCurTime() then return end
-		local vangle = LocalPlayer():EyeAngles()
+        local vangle = LocalPlayer():EyeAngles()
 
         if TabMemory.Flash then
-            local dlight = DynamicLight( LocalPlayer():EntIndex() )
-            if ( dlight ) then
+            local dlight = DynamicLight(LocalPlayer():EntIndex())
+
+            if dlight then
                 dlight.pos = LocalPlayer():EyePos()
                 dlight.r = 255
                 dlight.g = 255
@@ -648,7 +728,6 @@ TabPhone.Apps["camera"] = {
 
         timer.Simple(0, function()
             render.PushRenderTarget(cameratex, 0, 0, 512, 512)
-
             surface.PlaySound("npc/scanner/scanner_photo1.wav")
 
             local rt = {
@@ -660,11 +739,11 @@ TabPhone.Apps["camera"] = {
                 angles = vangle,
                 origin = EyePos(),
                 drawviewmodel = false,
-                fov = 50/TabMemory.CameraZoom,
+                fov = 50 / TabMemory.CameraZoom,
                 znear = 8
             }
-            render.RenderView(rt)
 
+            render.RenderView(rt)
             DrawTexturize(1, pattern)
 
             DrawColorModify({
@@ -687,9 +766,10 @@ TabPhone.Apps["camera"] = {
                 h = 512,
                 alpha = false,
             })
+
             file.CreateDir("arcrp_photos")
             file.CreateDir("arcrp_photos/thumbs")
-            file.Write("arcrp_photos/" .. os.time() ..  ".png", content)
+            file.Write("arcrp_photos/" .. os.time() .. ".png", content)
             render.PopRenderTarget()
 
             local rt_thumb = {
@@ -701,12 +781,12 @@ TabPhone.Apps["camera"] = {
                 angles = vangle,
                 origin = EyePos(),
                 drawviewmodel = false,
-                fov = 50/TabMemory.CameraZoom,
+                fov = 50 / TabMemory.CameraZoom,
                 znear = 8
             }
+
             render.PushRenderTarget(thumbtex, 0, 0, 64, 64)
             render.RenderView(rt_thumb)
-
             DrawTexturize(1, pattern)
 
             DrawColorModify({
@@ -729,7 +809,8 @@ TabPhone.Apps["camera"] = {
                 h = 64,
                 alpha = false,
             })
-            file.Write("arcrp_photos/thumbs/" .. os.time() ..  ".png", content_thumb)
+
+            file.Write("arcrp_photos/thumbs/" .. os.time() .. ".png", content_thumb)
             render.PopRenderTarget()
         end)
 
@@ -740,14 +821,15 @@ TabPhone.Apps["camera"] = {
         TabPhone.EnterApp("mainmenu")
     end,
     Func_Reload = function()
-		TabMemory.Flash = !TabMemory.Flash
-	end,
+        TabMemory.Flash = not TabMemory.Flash
+    end,
     Func_Scroll = function(level)
-		local last = TabMemory.CameraZoom
-		TabMemory.CameraZoom = math.Clamp( TabMemory.CameraZoom-(level), 1, 10 )
-		if last != TabMemory.CameraZoom then
-			surface.PlaySound(level > 0 and "fesiug/tabphone/zoom_out.ogg" or "fesiug/tabphone/zoom_in.ogg")
-		end
+        local last = TabMemory.CameraZoom
+        TabMemory.CameraZoom = math.Clamp(TabMemory.CameraZoom - level, 1, 10)
+
+        if last ~= TabMemory.CameraZoom then
+            surface.PlaySound(level > 0 and "fesiug/tabphone/zoom_out.ogg" or "fesiug/tabphone/zoom_in.ogg")
+        end
     end,
     Func_DrawScene = function()
         if camera_nextdraw < UnPredictedCurTime() then
@@ -760,12 +842,12 @@ TabPhone.Apps["camera"] = {
                 angles = vangle,
                 origin = EyePos(),
                 drawviewmodel = false,
-                fov = 50/TabMemory.CameraZoom,
+                fov = 50 / TabMemory.CameraZoom,
                 znear = 8
             }
+
             render.PushRenderTarget(cameratex, 0, 0, 512, 512)
             render.RenderView(rt)
-
             DrawTexturize(1, pattern)
 
             DrawColorModify({
@@ -781,19 +863,17 @@ TabPhone.Apps["camera"] = {
             })
 
             render.PopRenderTarget()
-
             camera_nextdraw = UnPredictedCurTime() + 1 / camera_framerate
         end
     end,
     Func_Draw = function(w, h)
-		TabMemory.LeftText = "TAKE PHOTO"
-		surface.SetDrawColor(COL_BG)
+        TabMemory.LeftText = "TAKE PHOTO"
+        surface.SetDrawColor(COL_BG)
         surface.DrawRect(0, 0, 512, 512)
-
         surface.SetMaterial(camMat)
         surface.SetDrawColor(255, 255, 255)
-		local realbound = (512-48-40)
-        surface.DrawTexturedRect(w/2 - realbound/2, ((512+48)/2 - (40/2)) - realbound/2, realbound, realbound)
+        local realbound = 512 - 48 - 40
+        surface.DrawTexturedRect(w / 2 - realbound / 2, ((512 + 48) / 2 - (40 / 2)) - realbound / 2, realbound, realbound)
 
         if TabMemory.NextPhotoTime - 0.9 > UnPredictedCurTime() then
             surface.SetDrawColor(0, 0, 0)
@@ -801,12 +881,14 @@ TabPhone.Apps["camera"] = {
         end
 
         if TabMemory.NextPhotoTime > UnPredictedCurTime() then return end
-        // rule of thirds !!!
+
+        -- rule of thirds !!!
         if TabMemory.Flash then
             surface.SetDrawColor(COL_FG)
         else
             surface.SetDrawColor(COL_BG)
         end
+
         surface.DrawLine(0, h / 3, w, h / 3)
         surface.DrawLine(0, h * 2 / 3, w, h * 2 / 3)
         surface.DrawLine(w / 3, 0, w / 3, h)
@@ -817,6 +899,7 @@ TabPhone.Apps["camera"] = {
         else
             surface.SetMaterial(noflashmat)
         end
+
         surface.DrawTexturedRect(10, 64, 48, 48)
     end,
 }
@@ -827,27 +910,24 @@ local function GetGalleryImages()
     table.Empty(cachedgalleryimages)
     local images = file.Find("arcrp_photos/thumbs/*.png", "DATA", "datedesc")
 
-    local c = 0
-
     for i, filename in ipairs(images) do
-        if c >= 9 then break end
-        c = c + 1
+
         table.insert(cachedgalleryimages, {
             index = i,
             filename = filename,
-            thumbmat = Material("data/arcrp_photos/thumbs/" .. filename)
         })
     end
 end
 
 TabPhone.Apps["gallery"] = {
     Name = "Gallery",
-    Icon = Material("fesiug/TabPhone/gallery.png"),
+    Icon = Material("fesiug/tabphone/gallery.png"),
     SortOrder = -1019,
     Func_Enter = function()
-		if !TabMemory.GallerySelected then
-			TabMemory.GallerySelected = 1
-		end
+        if not TabMemory.GallerySelected then
+            TabMemory.GallerySelected = 1
+        end
+
         GetGalleryImages()
     end,
     Func_Primary = function()
@@ -861,32 +941,60 @@ TabPhone.Apps["gallery"] = {
     end,
     Func_Reload = function()
         TabPhone.EnterApp("gallery_deleter")
-	end,
+    end,
     Func_Draw = function(w, h)
-		TabMemory.LeftText = ""
-		if #cachedgalleryimages <= 0 then
-			draw.SimpleText( "NO PHOTOS", "TabPhone32", w/2, (512-48)/2 - (40/2), COL_BG, TEXT_ALIGN_CENTER )
-		end
-		for i, k in ipairs(cachedgalleryimages) do
-            local xslot = (i - 1) % 3
-            local yslot = math.ceil(i / 3)
+        TabMemory.LeftText = ""
 
+        if #cachedgalleryimages <= 0 then
+            draw.SimpleText("NO PHOTOS", "TabPhone32", w / 2, (512 - 48) / 2 - (40 / 2), COL_BG, TEXT_ALIGN_CENTER)
+        end
+
+        local page = math.floor(TabMemory.GallerySelected / 9)
+        local maxpages = 16
+        local pagecount = math.floor(#cachedgalleryimages / 9)
+
+        for i, k in ipairs(cachedgalleryimages) do
             local sel = TabMemory.GallerySelected == i
-
+            local mypage = math.floor(i / 9)
+            if mypage ~= page then continue end
+            local s = i - (9 * mypage) + 1
+            local xslot = (s - 1) % 3
+            local yslot = math.ceil(s / 3)
             local sw = 120
             local sh = 120
             local x = 10 + xslot * (sw + 10)
-            local y = -60 + yslot * (sh + 10)
+            local y = -72 + yslot * (sh + 10)
 
             if sel then
                 surface.SetDrawColor(0, 0, 0)
                 surface.DrawRect(x - 5, y - 5, sw + 10, sh + 10)
-				TabMemory.LeftText = "VIEW"
-			end
+                TabMemory.LeftText = "VIEW"
+            end
+
+            if not k.thumbmat then
+                k.thumbmat = Material("data/arcrp_photos/thumbs/" .. k.filename)
+            end
 
             surface.SetMaterial(k.thumbmat)
             surface.SetDrawColor(255, 255, 255)
             surface.DrawTexturedRect(x, y, sw, sh)
+        end
+
+        if pagecount > maxpages then
+            draw.SimpleText(tostring(page + 1) .. "/" .. tostring(pagecount + 1), "TabPhone24", w / 2, h - 16 - 40 - 14, COL_BG, TEXT_ALIGN_CENTER)
+        else
+            for i = 1, pagecount do
+                local sel = (page % 19) + 1 == i
+
+                if sel then
+                    surface.SetMaterial(radio_filled)
+                else
+                    surface.SetMaterial(radio_empty)
+                end
+                surface.SetDrawColor(COL_BG)
+                local x = (w / 2) - (pagecount * 20 / 2) + (i * 20) - 20
+                surface.DrawTexturedRect(x, h - 16 - 40 - 8, 16, 16)
+            end
         end
     end,
 }
@@ -896,30 +1004,90 @@ TabPhone.Apps["gallery_viewer"] = {
     Hidden = true,
     Func_Enter = function() end,
     Func_Primary = function()
-        local image = cachedgalleryimages[TabMemory.GallerySelected]
-        if not image then return end
-		TabMemory.TempPFP = image.filename
-	end,
+        // local image = cachedgalleryimages[TabMemory.GallerySelected]
+        // if not image then return end
+        // TabMemory.TempPFP = image.filename
+        TabPhone.EnterApp("gallery_options")
+    end,
     Func_Secondary = function()
         TabPhone.EnterApp("gallery")
     end,
     Func_Reload = function()
         TabPhone.EnterApp("gallery_deleter")
-	end,
+    end,
     Func_Scroll = function(level)
         TabPhone.Scroll(level, "GallerySelected", #cachedgalleryimages)
     end,
     Func_Draw = function(w, h)
-		TabMemory.LeftText = "(TEMP)MAKE PFP"
-		local image = cachedgalleryimages[TabMemory.GallerySelected]
-
+        TabMemory.LeftText = "OPTIONS"
+        local image = cachedgalleryimages[TabMemory.GallerySelected]
         if not image then return end
-        if not image.material then image.material = Material("data/arcrp_photos/" .. image.filename) end
 
-		local available = 512 - 48 - 40
+        if not image.material then
+            image.material = Material("data/arcrp_photos/" .. image.filename)
+        end
+
+        local available = 512 - 48 - 40
         surface.SetMaterial(image.material)
         surface.SetDrawColor(255, 255, 255)
-        surface.DrawTexturedRect(BARRIER_FLIPPHONE/2 - available/2, ((512+48)/2 - (40/2)) - available/2, available, available)
+        surface.DrawTexturedRect(BARRIER_FLIPPHONE / 2 - available / 2, ((512 + 48) / 2 - (40 / 2)) - available / 2, available, available)
+    end,
+}
+
+local image_options = {
+    {
+        label = "Set Profile",
+        func = function()
+            // local image = cachedgalleryimages[TabMemory.GallerySelected]
+            // if not image then return end
+            // TabMemory.TempPFP = image.filename
+            TabMemory.ProfileSetting = true
+            TabPhone.EnterApp("contacts")
+        end,
+        icon = mat_profile
+    },
+    {
+        label = "Delete",
+        func = function()
+            TabPhone.EnterApp("gallery_deleter")
+        end,
+        icon = Material("fesiug/tabphone/bin.png")
+    }
+}
+
+TabPhone.Apps["gallery_options"] = {
+    Name = "Image Options",
+    Hidden = true,
+    Func_Enter = function() end,
+    Func_Scroll = function(level)
+        TabPhone.Scroll(level, "SelectedImageOption", #image_options)
+    end,
+    Func_Primary = function()
+        image_options[TabMemory.SelectedImageOption].func()
+    end,
+    Func_Secondary = function()
+        TabPhone.EnterApp("gallery_viewer")
+    end,
+    Func_Reload = function() end,
+    Func_Draw = function(w, h)
+        for i, opt in ipairs(image_options) do
+            local sel = i == TabMemory.SelectedImageOption
+            surface.SetDrawColor(COL_BG)
+
+            if sel then
+                surface.DrawRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52)
+            else
+                surface.DrawOutlinedRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52, 4)
+            end
+
+            draw.SimpleText(opt.label, "TabPhone32", 8 + 8 + 8 + 8 + 8 + 32, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
+
+            if opt.icon then
+                surface.SetDrawColor(sel and COL_FG or COL_BG)
+                surface.SetMaterial(opt.icon)
+                surface.DrawTexturedRect(8 + 8 + 4 + 4, ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
+            end
+        end
     end,
 }
 
@@ -928,34 +1096,36 @@ TabPhone.Apps["gallery_deleter"] = {
     Hidden = true,
     Func_Enter = function()
         LocalPlayer():EmitSound("fesiug/tabphone/delete.ogg", 70, 100, 0.5, CHAN_STATIC)
-	end,
+    end,
     Func_Reload = function() end,
     Func_Primary = function()
-		local image = cachedgalleryimages[TabMemory.GallerySelected]
-		file.Delete("arcrp_photos/" .. image.filename )
-		file.Delete("arcrp_photos/thumbs/" .. image.filename )
-		cachedgalleryimages[TabMemory.GallerySelected] = nil
-		GetGalleryImages()
-        TabPhone.EnterApp("gallery")
-	end,
-    Func_Secondary = function()
+        local image = cachedgalleryimages[TabMemory.GallerySelected]
+        file.Delete("arcrp_photos/" .. image.filename)
+        file.Delete("arcrp_photos/thumbs/" .. image.filename)
+        cachedgalleryimages[TabMemory.GallerySelected] = nil
+        GetGalleryImages()
         TabPhone.EnterApp("gallery")
     end,
+    Func_Secondary = function()
+        TabPhone.EnterApp("gallery_viewer")
+    end,
     Func_Draw = function(w, h)
-		TabMemory.LeftText = "CONFIRM"
-		TabMemory.RightText = "CANCEL"
-		surface.SetDrawColor(COL_BG)
-        surface.DrawRect(0, 0, 512, 512 )
-		
-		draw.SimpleText("DELETE??", "TabPhone32", w/2, 64, COL_FG, TEXT_ALIGN_CENTER)
-		draw.SimpleText("This cannot", "TabPhone24", w/2, 80+24, COL_FG, TEXT_ALIGN_CENTER)
-		draw.SimpleText("be undone!!", "TabPhone24", w/2, 80+24+24, COL_FG, TEXT_ALIGN_CENTER)
-
+        TabMemory.LeftText = "CONFIRM"
+        TabMemory.RightText = "CANCEL"
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(0, 0, 512, 512)
+        draw.SimpleText("DELETE??", "TabPhone32", w / 2, 64, COL_FG, TEXT_ALIGN_CENTER)
+        draw.SimpleText("This cannot", "TabPhone24", w / 2, 80 + 24, COL_FG, TEXT_ALIGN_CENTER)
+        draw.SimpleText("be undone!!", "TabPhone24", w / 2, 80 + 24 + 24, COL_FG, TEXT_ALIGN_CENTER)
         local image = cachedgalleryimages[TabMemory.GallerySelected]
         if not image then return end
-        if not image.material then image.material = Material("data/arcrp_photos/" .. image.filename) end
-		surface.SetMaterial(image.material)
-		surface.SetDrawColor(255, 255, 255)
-		surface.DrawTexturedRect(w/2 - 300/2, 172, 300, 300)
+
+        if not image.material then
+            image.material = Material("data/arcrp_photos/" .. image.filename)
+        end
+
+        surface.SetMaterial(image.material)
+        surface.SetDrawColor(255, 255, 255)
+        surface.DrawTexturedRect(w / 2 - 300 / 2, 172, 300, 300)
     end,
 }
