@@ -1238,7 +1238,7 @@ TabPhone.Apps["gallery_options"] = {
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
-		local superoff = -4 + 256 + 8
+		local superoff = -4 + 256 + 8 + 40
 		
         local image = cachedgalleryimages[TabMemory.GallerySelected]
         if not image then return end
@@ -1249,6 +1249,10 @@ TabPhone.Apps["gallery_options"] = {
         surface.SetMaterial(image.material)
         surface.SetDrawColor(255, 255, 255)
         surface.DrawTexturedRect(w/2 - 256/2, 48 + 4, 256, 256)
+
+		local hourstyle = GetConVar("tabphone_24h"):GetBool() and "%H:%M" or "%I:%M %p"
+		local mrew = os.date( "%Y-%m-%d, " .. hourstyle, tonumber( image.filename:Left(-5) ) )
+		draw.SimpleText(mrew, "TabPhone24", w/2, 48+8+256+8, COL_BG, TEXT_ALIGN_CENTER)
 
         for i, opt in ipairs(image_options) do
             local sel = i == TabMemory.SelectedImageOption

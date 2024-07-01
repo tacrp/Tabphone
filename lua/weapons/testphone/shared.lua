@@ -209,3 +209,18 @@ end
 function TabPhone.EndRingtone()
 	LocalPlayer():StopSound(TabPhone.GetRingtonePath())
 end
+
+function SWEP:GetViewModelPosition( pos, ang )
+
+	local mover = Vector( -0.8, -1.5, 0.4 )
+
+	pos:Add( mover.x * ang:Right() )
+	pos:Add( mover.y * ang:Forward() )
+	pos:Add( mover.z * ang:Up() )
+
+	-- ang:RotateAroundAxis( ang:Right(), 0 )
+	-- ang:RotateAroundAxis( ang:Forward(), 0 )
+	-- ang:RotateAroundAxis( ang:Up(), 0 )
+
+	return pos, ang
+end
