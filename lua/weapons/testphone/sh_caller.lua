@@ -28,11 +28,14 @@ if CLIENT then
 
 		if w:IsValid() then
 			--input.SelectWeapon(w)
-			TabPhone.EnterApp("call")
-			TabMemory.CallStatus = "ringing"
-			local sender = net.ReadPlayer()
-			TabMemory.CallingPlayer = sender
-			chat.AddText("You have a call")
+
+			if not GetConVar("tabphone_dnd"):GetBool() then
+				TabPhone.EnterApp("call")
+				TabMemory.CallStatus = "ringing"
+				local sender = net.ReadPlayer()
+				TabMemory.CallingPlayer = sender
+				chat.AddText("You have a call")
+			end
 		end
 	end)
 

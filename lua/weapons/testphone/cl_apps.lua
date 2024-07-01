@@ -63,7 +63,7 @@ TabPhone.Apps["mainmenu"] = {
     Func_Enter = function() end,
     Func_Primary = function()
         local Sortedapps = GetApps()
-        TabMemory.ProfileSetting = false
+        TabMemory.ContactsMode = "contact"
         TabPhone.EnterApp(Sortedapps[TabMemory.Selected])
     end,
     Func_Secondary = function()
@@ -186,26 +186,28 @@ TabPhone.Apps["contacts"] = {
         loadpfps()
     end,
     Func_Primary = function()
-        if TabMemory.ProfileSetting then
+        if TabMemory.ContactsMode == "profile" then
             local image = cachedgalleryimages[TabMemory.GallerySelected]
             if not image then return end
             local index = "SteamID:" .. tostring(cachedplayers[TabMemory.SelectedPlayer].Entity:SteamID64())
             TabMemory.ProfilePictures[index] = image.filename
             TabMemory.ProfilePicturesMats[index] = nil
-            TabMemory.ProfileSetting = false
+            TabMemory.ContactsMode = "contact"
             savepfps()
             TabPhone.EnterApp("gallery")
-        else
+        elseif TabMemory.ContactsMode == "contact" then
             net.Start("Tabphone_Call_Send")
             net.WriteString(cachedplayers[TabMemory.SelectedPlayer].Entity:SteamID64())
             net.SendToServer()
             TabPhone.EnterApp("active_call")
             LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, TabPhone.GetVolume(), CHAN_STATIC)
+        elseif TabMemory.ContactsMode == "message" then
+            TabPhone.EnterApp("messages_viewer")
         end
     end,
     Func_Secondary = function()
-        if TabMemory.ProfileSetting then
-            TabMemory.ProfileSetting = false
+        if TabMemory.ContactsMode == "profile" then
+            TabMemory.ContactsMode = "contact"
             TabPhone.EnterApp("gallery_options")
         else
             TabPhone.EnterApp("mainmenu")
@@ -223,7 +225,8 @@ TabPhone.Apps["contacts"] = {
             local pd = {
                 Entity = v,
                 Name = v:Nick(),
-                Icon = GetProfilePic(v)
+                Icon = GetProfilePic(v),
+                SteamID64 = v:SteamID64()
             }
 
             table.insert(cachedplayers, pd)
@@ -264,9 +267,9 @@ TabPhone.Apps["contacts"] = {
                 if v.Entity == LocalPlayer() then
                     TabMemory.LeftText = ""
                 else
-                    if TabMemory.ProfileSetting then
+                    if TabMemory.ContactsMode == "profile" then
                         TabMemory.LeftText = "SET"
-                    else
+                    elseif TabMemory.ContactsMode == "contact" then
                         TabMemory.LeftText = "CALL"
                     end
                 end
@@ -275,7 +278,20 @@ TabPhone.Apps["contacts"] = {
             end
 
             draw.SimpleText(v.Name, "TabPhone32", 8 + 96 + 8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
-            draw.SimpleText(v.Entity:SteamID64(), "TabPhone16", BARRIER_FLIPPHONE - 16 - 8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8 + 8 + (96 - 8 - 8 - 16), sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
+
+            local textr = v.Entity:SteamID64()
+
+            if TabMemory.ContactsMode == "message" then
+                textr = "I am going to jeff the kill you"
+
+                local maxlen = 22
+
+                if string.len(textr) > maxlen then
+                    textr = string.sub(textr, 1, maxlen - 3) .. "..."
+                end
+            end
+
+            draw.SimpleText(textr, "TabPhone16", BARRIER_FLIPPHONE - 16 - 8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8 + 8 + (96 - 8 - 8 - 16), sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
 
             if v.Icon then
                 surface.SetDrawColor(255, 255, 255)
@@ -308,42 +324,158 @@ TabPhone.Apps["messages"] = {
     Name = "Messages",
     Icon = Material("fesiug/tabphone/message.png"),
     SortOrder = -1008,
+    Func_Enter = function()
+        TabMemory.ContactsMode = "message"
+        TabPhone.EnterApp("contacts")
+    end,
+}
+
+local fakemsgcache = {
+    {
+        yours = false,
+        msg = {"kai cenat", "gyatt", "rizzler"},
+        lines = 3,
+    },
+    {
+        yours = false,
+        msg = {"kai cenat", "gyatt", "rizzler"},
+        lines = 3,
+    },
+    {
+        yours = false,
+        msg = {"kai cenat", "gyatt", "rizzler"},
+        lines = 3,
+    },
+    {
+        yours = true,
+        msg = {"stfu"},
+        lines = 1,
+    },
+    {
+        yours = false,
+        msg = {"kai cenat", "gyatt", "rizzler"},
+        lines = 3,
+    },
+    {
+        yours = false,
+        msg = {"amogus"},
+        lines = 1,
+    },
+    {
+        yours = false,
+        msg = {"rick n morty"},
+        lines = 1,
+    },
+    {
+        yours = true,
+        msg = {"stfu"},
+        lines = 1,
+    },
+    {
+        yours = false,
+        msg = {"kai cenat", "gyatt"},
+        lines = 2,
+    },
+    {
+        yours = false,
+        msg = {"rizz"},
+        lines = 1,
+    },
+    {
+        yours = false,
+        msg = {"r u sus?"},
+        lines = 1,
+    },
+    {
+        yours = true,
+        msg = {"wtf"},
+        lines = 1,
+    },
+    {
+        yours = false,
+        msg = {"saw u venting"},
+        lines = 1,
+    },
+    {
+        yours = true,
+        msg = {"nuh uh"},
+        lines = 1,
+    },
+}
+
+TabPhone.Apps["messages_viewer"] = {
+    Name = "Messages",
+    Hidden = true,
+    Icon = Material("fesiug/tabphone/message.png"),
+    SortOrder = -1008,
     Func_Enter = function() end,
-    Func_Scroll = function() end,
+    Func_Scroll = function(level)
+        local min = 0
+        local max = -358
+
+        for _, msg in ipairs(fakemsgcache) do
+            max = max + msg.lines * 32
+            max = max + 8
+        end
+
+        max = math.max(max, 0)
+
+        TabMemory.MessageScroll = TabMemory.MessageScroll - (level * 32)
+        TabMemory.MessageScroll = math.Clamp(TabMemory.MessageScroll, min, max)
+    end,
     Func_Primary = function() end,
     Func_Secondary = function()
-        TabPhone.EnterApp("mainmenu")
+        TabPhone.EnterApp("contacts")
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
+        TabMemory.LeftText = "NEW MSG"
+
         surface.SetDrawColor(COL_BG)
         surface.DrawRect(0, 48, 512, 48 + 4 + 4)
 
-        if TabMemory.TempPFP then
-            surface.SetMaterial(Material("data/arcrp_photos/thumbs/" .. TabMemory.TempPFP))
+        local ply = cachedplayers[TabMemory.SelectedPlayer]
+
+        if not player then TabPhone.EnterApp("contacts") end
+
+        local pfp = GetProfilePic(ply.Entity)
+        if pfp then
+            surface.SetMaterial(pfp)
             surface.SetDrawColor(255, 255, 255)
             surface.DrawTexturedRect(4, 48 + 4, 48, 48)
         end
 
-        draw.SimpleText("Alice", "TabPhone24", 8 + 48 + 8 + 4, 8 + 48 + 4, COL_FG)
+        draw.SimpleText(ply.Name, "TabPhone24", 8 + 48 + 8 + 4, 8 + 48 + 4, COL_FG)
 
-        do
+        render.SetScissorRect(0, 104, w, h, true)
+
+        local v_y = 512 - 40 - 8 - (24 + 4) - 4 + TabMemory.MessageScroll
+
+        for i = 1, #fakemsgcache do
+            local msg = fakemsgcache[#fakemsgcache - i + 1]
             surface.SetFont("TabPhone24")
-            local ts = "'jeff the kill' you"
-            local tsn = surface.GetTextSize(ts)
             surface.SetDrawColor(COL_BG)
-            surface.DrawRect(w - 8 - tsn, 512 - 40 - 8 - (24 + 4 + 4), tsn, 24 + 4 + 4)
-            draw.SimpleText(ts, "TabPhone24", w - 8 - tsn, 512 - 40 - 8 - (24 + 4), COL_FG)
+
+            for _, ts in ipairs(msg.msg) do
+                if v_y > 0 and v_y < h then
+                    local tsn = surface.GetTextSize(ts)
+
+                    if msg.yours  then
+                        surface.DrawOutlinedRect(w - 12 - tsn, v_y, tsn + 4, 24 + 4 + 4, 2)
+                        draw.SimpleText(ts, "TabPhone24", w - 8 - tsn, v_y, COL_BG)
+                    else
+                        surface.DrawRect(8, v_y, tsn, 24 + 4 + 4)
+                        draw.SimpleText(ts, "TabPhone24", 8, v_y, COL_FG)
+                    end
+                end
+
+                v_y = v_y - 32
+            end
+
+            v_y = v_y - 8
         end
 
-        do
-            surface.SetFont("TabPhone24")
-            local ts = "'jeff the kill' you"
-            local tsn = surface.GetTextSize(ts)
-            surface.SetDrawColor(COL_BG)
-            surface.DrawRect(8, 512 - 40 - 8 - (24 + 4 + 4) - 8 - (24 + 4 + 4), tsn, 24 + 4 + 4)
-            draw.SimpleText(ts, "TabPhone24", 8, 512 - 40 - 8 - (24 + 4 + 4) - 8 - (24 + 4), COL_FG)
-        end
+        render.SetScissorRect(0, 56, w, h, false)
     end,
 }
 
@@ -586,6 +718,12 @@ local settings_options = {
         convar = GetConVar("tabphone_24h")
     },
     {
+        label = "No Disturb",
+        type = "bool",
+        convar = GetConVar("tabphone_dnd"),
+        icon = Material("fesiug/tabphone/sleep.png"),
+    },
+    {
         label = "Back",
         type = "func",
         func_change = function()
@@ -594,7 +732,8 @@ local settings_options = {
             if TabMemory.RingToneExample then
                 TabMemory.RingToneExample:Stop()
             end
-        end
+        end,
+        icon = Material("fesiug/tabphone/back.png"),
     }
 }
 
@@ -1049,7 +1188,7 @@ local image_options = {
             // local image = cachedgalleryimages[TabMemory.GallerySelected]
             // if not image then return end
             // TabMemory.TempPFP = image.filename
-            TabMemory.ProfileSetting = true
+            TabMemory.ContactsMode = "profile"
             TabPhone.EnterApp("contacts")
         end,
         icon = mat_profile

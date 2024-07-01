@@ -45,7 +45,10 @@ TabMemory = {
     NextChangeSignal = 0,
     SelectedImageOption = 1,
     ProfilePictures = {},
-    ProfilePicturesMats = {}
+    ProfilePicturesMats = {},
+    MessageHistory = {},
+    ContactsMode = "contacts",
+    MessageScroll = 0
 }
 
 function TabPhone.EnterApp(name)
