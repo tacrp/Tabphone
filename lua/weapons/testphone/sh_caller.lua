@@ -9,6 +9,8 @@ if SERVER then
 	util.AddNetworkString("Tabphone_Call_YouDidntAnswer")
 	util.AddNetworkString("Tabphone_Call_HangUp")
 	util.AddNetworkString("Tabphone_Call_HangUp_Recipient")
+
+	util.AddNetworkString("Tabphone_Message")
 end
 
 TP_CALLDECLINE_BUSY = 0
@@ -21,6 +23,14 @@ TP_CALLCONFIRM_SMARTASS = 4
 TP_CALLCONFIRM_ANSWERED = 5
 
 if CLIENT then
+	net.Receive("TabPhone_Message", function(len, ply)
+		local sender = net.ReadEntity()
+		local message = net.ReadString()
+	end)
+
+	function TabPhone.SendMessage(ply, message)
+	end
+
 	net.Receive("Tabphone_Call_Ring", function(len, ply)
 		TabPhone.StartRingtone()
 		local p = LocalPlayer()
@@ -144,6 +154,24 @@ if SERVER then
 
 		return okay
 	end
+
+	net.Receive("TabPhone_Message", function(len, ply)
+		local recipient = net.ReadEntity()
+		local message = net.ReadString()
+
+		message = string.sub(message, 1, 200)
+
+		if !IsValid(recipient) then return end
+		if !recipient:IsPlayer() then return end
+		if (ply.TabPhoneMessageDebounceTime or 0) > CurTime() then return end
+
+		ply.TabPhoneMessageDebounceTime = CurTime() + 0.5
+
+		net.Start("TabPhone_Message")
+		net.WriteEntity(ply)
+		net.WriteString(message)
+		net.Send(recipient)
+	end)
 
 	net.Receive("Tabphone_Call_HangUp", function(len, ply)
 		local HangUpLine = TABPHONE_LINKER[ply]
