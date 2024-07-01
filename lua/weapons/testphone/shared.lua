@@ -110,7 +110,7 @@ function SWEP:Holster()
 	if CLIENT and IsFirstTimePredicted() then
 		local active = TabMemory.ActiveApp
 		local activeapp = TabPhone.Apps[active]
-		if activeapp.Func_Holster then
+		if activeapp and activeapp.Func_Holster then
 			activeapp.Func_Holster()
 		end
 	end
@@ -180,7 +180,7 @@ if CLIENT then
 
 		if wpn.IsTabPhone then
 			local activeapp = TabPhone.Apps[TabMemory.ActiveApp]
-			if activeapp.Func_DrawScene then
+			if activeapp and activeapp.Func_DrawScene then
 				activeapp.Func_DrawScene()
 			end
 		end

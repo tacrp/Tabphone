@@ -476,9 +476,9 @@ TabPhone.Apps["active_call"] = {
         surface.DrawRect((BARRIER_FLIPPHONE / 2) - tsn/2, 64 + 16, tsn, 32+4+4)
         draw.SimpleText(nick, "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + 16, COL_BG, TEXT_ALIGN_CENTER)
 		
-		local voicesize = Entity(2):VoiceVolume()*100*10
-		surface.SetDrawColor(COL_BG)
-        surface.DrawRect((BARRIER_FLIPPHONE / 2) - voicesize/2, 256 - voicesize/2, voicesize, voicesize)
+		--local voicesize = Entity(2):VoiceVolume()*100*10
+		--surface.SetDrawColor(COL_BG)
+        --surface.DrawRect((BARRIER_FLIPPHONE / 2) - voicesize/2, 256 - voicesize/2, voicesize, voicesize)
     end,
 }
 
@@ -500,6 +500,12 @@ local settings_options = {
             TabMemory.RingToneExample:Play()
         end,
         type = "int",
+    },
+    {
+        label = "24-Hour Clock",
+        icon = Material("fesiug/TabPhone/clock.png"),
+        type = "bool",
+		var = "ClockStyle",
     },
     {
         label = "Back",
@@ -544,6 +550,15 @@ local function changeOption(level)
             if isfunction(opt.func_change) then
                 opt.func_change(val)
             end
+		elseif opt.type == "bool" then
+			if !TabMemory[opt.var] then
+				TabMemory[opt.var] = false
+			end
+
+			TabMemory[opt.var] = !TabMemory[opt.var]
+			if opt.convar then
+				opt.convar:SetBool( TabMemory[opt.var] )
+			end
         else
             if isfunction(opt.func_change) then
                 opt.func_change()

@@ -31,6 +31,7 @@ TabMemory = TabMemory or {
     SelectedPlayer = 1,
     TotalScrollContacts = 0,
 	CallEndTime = math.huge,
+	ClockStyle = false, -- 24 for true, 12 for false
 	YouDial = "",
 }
 
@@ -91,7 +92,7 @@ function SWEP:PreDrawViewModel(vm, wep, ply)
         colon = " "
     end
 
-    if false then
+    if TabMemory.ClockStyle then
         TimeString = os.date("%H" .. colon .. "%M", Timestamp)
     else
         TimeString = os.date("%I" .. colon .. "%M %p", Timestamp)
