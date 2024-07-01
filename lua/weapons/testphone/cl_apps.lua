@@ -61,6 +61,7 @@ TabPhone.Apps["mainmenu"] = {
     Icon = Material("fesiug/tabphone/contact.png"),
     SortOrder = 0,
     Func_Enter = function() end,
+    Func_Leave = function() end,
     Func_Primary = function()
         local Sortedapps = GetApps()
         TabMemory.ContactsMode = "contact"
@@ -185,6 +186,9 @@ TabPhone.Apps["contacts"] = {
     Func_Enter = function()
         loadpfps()
     end,
+    Func_Leave = function()
+		TabMemory.ContactsMode = "contact"
+	end,
     Func_Primary = function()
         if TabMemory.ContactsMode == "profile" then
             local image = cachedgalleryimages[TabMemory.GallerySelected]
@@ -425,7 +429,7 @@ TabPhone.Apps["messages_viewer"] = {
     end,
     Func_Primary = function() end,
     Func_Secondary = function()
-        TabPhone.EnterApp("contacts")
+        TabPhone.EnterApp("messages")
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
@@ -712,13 +716,30 @@ local settings_options = {
         type = "int",
     },
     {
+        label = "Notif.Tone",
+        icon = Material("fesiug/tabphone/bell.png"),
+        min = 1,
+        max = function() return #TabPhone.Ringtones end,
+        convar = GetConVar("tabphone_notiftone"),
+        func_change = function(val)
+            if TabMemory.RingToneExample then
+                TabMemory.RingToneExample:Stop()
+            end
+
+            local sound = TabPhone.RingtonePath .. TabPhone.Ringtones[val]
+            TabMemory.RingToneExample = CreateSound(LocalPlayer(), sound)
+            TabMemory.RingToneExample:PlayEx(TabPhone.GetVolume(), 100)
+        end,
+        type = "int",
+    },
+    {
         label = "24h Time",
         icon = Material("fesiug/tabphone/clock.png"),
         type = "bool",
         convar = GetConVar("tabphone_24h")
     },
     {
-        label = "No Disturb",
+        label = "DontDisturb",
         type = "bool",
         convar = GetConVar("tabphone_dnd"),
         icon = Material("fesiug/tabphone/sleep.png"),
@@ -1087,7 +1108,7 @@ TabPhone.Apps["gallery"] = {
         TabPhone.Scroll(level, "GallerySelected", #cachedgalleryimages)
     end,
     Func_Reload = function()
-        TabPhone.EnterApp("gallery_deleter")
+        TabPhone.EnterApp("gallery_options")
     end,
     Func_Draw = function(w, h)
         TabMemory.LeftText = ""
@@ -1163,7 +1184,7 @@ TabPhone.Apps["gallery_viewer"] = {
         TabPhone.EnterApp("gallery")
     end,
     Func_Reload = function()
-        TabPhone.EnterApp("gallery_deleter")
+        TabPhone.EnterApp("gallery_options")
     end,
     Func_Scroll = function(level)
         TabPhone.Scroll(level, "GallerySelected", #cachedgalleryimages)

@@ -1,6 +1,7 @@
 if SERVER then return end
 
-CreateClientConVar("tabphone_ringtone", "13", true, true)
+CreateClientConVar("tabphone_ringtone", "16", true, true)
+CreateClientConVar("tabphone_notiftone", "51", true, true)
 CreateClientConVar("tabphone_volume", "5", true, true)
 CreateClientConVar("tabphone_24h", "0", true, true)
 CreateClientConVar("tabphone_dnd", "0", true, true)

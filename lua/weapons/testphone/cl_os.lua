@@ -32,6 +32,7 @@ local SIGNAL_IMAGES = {
 
 TabMemory = TabMemory or {
     ActiveApp = false,
+	LastApp = false,
     --GallerySelected = 1,
     SelectedSetting = 1,
     Flash = false,
@@ -53,6 +54,14 @@ TabMemory = TabMemory or {
 
 function TabPhone.EnterApp(name)
     local from = TabMemory.ActiveApp
+	TabMemory.LastApp = from
+	do
+		local active = TabMemory.LastApp
+		local activeapp = TabPhone.Apps[active]
+		if activeapp and activeapp.Func_Leave then
+			TabPhone.Apps[active].Func_Leave(name)
+		end
+	end
     TabMemory.ActiveApp = name
     TabMemory.PageSwitchTime = UnPredictedCurTime()
     local active = TabMemory.ActiveApp
