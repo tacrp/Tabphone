@@ -196,10 +196,68 @@ end
 
 TabPhone.RingtonePath = "fesiug/tabphone/ringtones/44khz/"
 
-TabPhone.Ringtones = {"1.6.ogg", "109.ogg", "americafyeah.ogg", "amongla.ogg", "angrybirds.ogg", "arab.ogg", "Bassmatic.ogg", "butterfly.ogg", "callring.ogg", "callring2.ogg", "callring3_franklin.ogg", "callring4.ogg", "callring5.ogg", "callring6_michael.ogg", "callring7.ogg", "callring8_trevor.ogg", "clockring.ogg", "Cool Room.ogg", "Countryside.ogg", "Credit Check.ogg", "Dragon Brain.ogg", "Drive.ogg", "duvet.ogg", "edgy.ogg", "Fox.ogg", "Funk in Time.ogg", "Get Down.ogg", "gutsberserk.ogg", "High Seas.ogg", "Hooker.ogg", "Into Something.ogg", "Katja's Waltz.ogg", "Laidback.ogg", "Malfunction.ogg", "Mine Until Monday.ogg", "Pager.ogg", "Ringing 1.ogg", "Ringing 2.ogg", "russian.ogg", "Science of Crime.ogg", "sfx_sms.ogg", "Solo.ogg", "Spy.ogg", "Standard Ring.ogg", "Swing It.ogg", "tailsofvalor.ogg", "Take the Pain.ogg", "Teeker.ogg", "Text.ogg", "textring.ogg", "textring2.ogg", "textring3.ogg", "textring4.ogg", "textring5.ogg", "The One for Me.ogg", "themanwhosoldtheworld.ogg", "Tonight.ogg", "valve.ogg",}
+TabPhone.Notiftones = {
+	"notifs/textring.ogg",
+	"notifs/textring2.ogg",
+	"notifs/textring3.ogg",
+	"notifs/textring4.ogg",
+	"notifs/textring5.ogg",
+	"notifs/Text.ogg",
+	"notifs/sfx_sms.ogg",
+}
+
+TabPhone.Ringtones = {
+	"Standard Ring.ogg",
+	"arab.ogg",
+	"butterfly.ogg",
+	"americafyeah.ogg",
+	"amongla.ogg",
+	"angrybirds.ogg",
+	"duvet.ogg",
+	"edgy.ogg",
+	"gutsberserk.ogg",
+	"russian.ogg",
+	"tailsofvalor.ogg",
+	"themanwhosoldtheworld.ogg",
+	"1.6.ogg",
+	"valve.ogg",
+	"clockring.ogg",
+
+	-- GTA 5
+	"callring3_franklin.ogg",
+	"callring6_michael.ogg",
+	"callring8_trevor.ogg",
+	--"callring.ogg",
+	--"callring2.ogg",
+	--"callring4.ogg",
+	--"callring5.ogg",
+	--"callring7.ogg",
+	
+	-- GTA 4
+	"109.ogg",
+	"Cool Room.ogg",
+	"Countryside.ogg",
+	"Credit Check.ogg",
+	"Dragon Brain.ogg",
+	"Drive.ogg",
+	"Fox.ogg",
+	"Funk in Time.ogg",
+	"Hooker.ogg",
+	"Katja's Waltz.ogg",
+	"Malfunction.ogg",
+	"Pager.ogg",
+}
 
 function TabPhone.GetRingtonePath()
 	return TabPhone.RingtonePath .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
+end
+
+function TabPhone.GetNotiftonePath()
+	return TabPhone.RingtonePath .. TabPhone.Notiftones[GetConVar("tabphone_notiftone"):GetInt()]
+end
+
+function TabPhone.PlayNotiftone()
+	LocalPlayer():EmitSound(TabPhone.GetNotiftonePath(), 100, 100, TabPhone.GetVolume(), CHAN_STATIC)
 end
 
 function TabPhone.StartRingtone()
@@ -210,9 +268,16 @@ function TabPhone.EndRingtone()
 	LocalPlayer():StopSound(TabPhone.GetRingtonePath())
 end
 
+local vmposes = {
+	vector_origin,
+	Vector( -1.5, 0, 0 ),
+	Vector( -0.9, -1.5, 0.4 ),
+	Vector( -1.5, -1.5, 0.4 ),
+}
+
 function SWEP:GetViewModelPosition( pos, ang )
 
-	local mover = Vector( -0.8, -1.5, 0.4 )
+	local mover = vmposes[GetConVar("tabphone_vmpos"):GetInt()]
 
 	pos:Add( mover.x * ang:Right() )
 	pos:Add( mover.y * ang:Forward() )

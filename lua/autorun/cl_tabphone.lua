@@ -1,11 +1,12 @@
 if SERVER then return end
 
-CreateClientConVar("tabphone_ringtone", "16", true, true)
-CreateClientConVar("tabphone_notiftone", "51", true, true)
+CreateClientConVar("tabphone_ringtone", "1", true, true)
+CreateClientConVar("tabphone_notiftone", "1", true, true)
 CreateClientConVar("tabphone_volume", "5", true, true)
 CreateClientConVar("tabphone_24h", "0", true, true)
 CreateClientConVar("tabphone_dnd", "0", true, true)
 CreateClientConVar("tabphone_silent", "0", true, true)
+CreateClientConVar("tabphone_vmpos", "1", true, true)
 
 hook.Add( "PlayerBindPress", "TabPhone", function(ply, bind, pressed)
     local block = nil

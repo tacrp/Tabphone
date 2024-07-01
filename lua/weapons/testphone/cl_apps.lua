@@ -488,7 +488,9 @@ TabPhone.Apps["jobs"] = {
     Icon = Material("fesiug/tabphone/job.png"),
     SortOrder = -1007,
     Func_Enter = function() end,
-    Func_Primary = function() end,
+    Func_Primary = function()
+		TabPhone.PlayNotiftone()
+	end,
     Func_Secondary = function()
         TabPhone.EnterApp("mainmenu")
     end,
@@ -716,20 +718,28 @@ local settings_options = {
         type = "int",
     },
     {
-        label = "Notif.Tone",
+        label = "Notiftone",
         icon = Material("fesiug/tabphone/bell.png"),
         min = 1,
-        max = function() return #TabPhone.Ringtones end,
+        max = function() return #TabPhone.Notiftones end,
         convar = GetConVar("tabphone_notiftone"),
         func_change = function(val)
             if TabMemory.RingToneExample then
                 TabMemory.RingToneExample:Stop()
             end
 
-            local sound = TabPhone.RingtonePath .. TabPhone.Ringtones[val]
+            local sound = TabPhone.RingtonePath .. TabPhone.Notiftones[val]
             TabMemory.RingToneExample = CreateSound(LocalPlayer(), sound)
             TabMemory.RingToneExample:PlayEx(TabPhone.GetVolume(), 100)
         end,
+        type = "int",
+    },
+    {
+        label = "Phone Dist.",
+        icon = Material("fesiug/tabphone/settings.png"),
+        min = 1,
+        max = 4,
+        convar = GetConVar("tabphone_vmpos"),
         type = "int",
     },
     {
