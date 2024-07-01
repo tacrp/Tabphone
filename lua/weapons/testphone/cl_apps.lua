@@ -10,68 +10,6 @@ local IMAGE_MESSAGE = Material("fesiug/TabPhone/message.png")
 
 local BARRIER_FLIPPHONE = 404
 
-TabPhone.RingtonePath = "fesiug/tabphone/ringtones/44khz/"
-TabPhone.Ringtones = {
-    "1.6.ogg",
-    "109.ogg",
-    "americafyeah.ogg",
-    "amongla.ogg",
-    "angrybirds.ogg",
-    "arab.ogg",
-    "Bassmatic.ogg",
-    "butterfly.ogg",
-    "callring.ogg",
-    "callring2.ogg",
-    "callring3_franklin.ogg",
-    "callring4.ogg",
-    "callring5.ogg",
-    "callring6_michael.ogg",
-    "callring7.ogg",
-    "callring8_trevor.ogg",
-    "clockring.ogg",
-    "Cool Room.ogg",
-    "Countryside.ogg",
-    "Credit Check.ogg",
-    "Dragon Brain.ogg",
-    "Drive.ogg",
-    "duvet.ogg",
-    "edgy.ogg",
-    "Fox.ogg",
-    "Funk in Time.ogg",
-    "Get Down.ogg",
-    "gutsberserk.ogg",
-    "High Seas.ogg",
-    "Hooker.ogg",
-    "Into Something.ogg",
-    "Katja's Waltz.ogg",
-    "Laidback.ogg",
-    "Malfunction.ogg",
-    "Mine Until Monday.ogg",
-    "Pager.ogg",
-    "Ringing 1.ogg",
-    "Ringing 2.ogg",
-    "russian.ogg",
-    "Science of Crime.ogg",
-    "sfx_sms.ogg",
-    "Solo.ogg",
-    "Spy.ogg",
-    "Standard Ring.ogg",
-    "Swing It.ogg",
-    "tailsofvalor.ogg",
-    "Take the Pain.ogg",
-    "Teeker.ogg",
-    "Text.ogg",
-    "textring.ogg",
-    "textring2.ogg",
-    "textring3.ogg",
-    "textring4.ogg",
-    "textring5.ogg",
-    "The One for Me.ogg",
-    "themanwhosoldtheworld.ogg",
-    "Tonight.ogg",
-    "valve.ogg",
-}
-
 local function GetApps()
     local Sortedapps = {}
 
@@ -208,7 +146,7 @@ TabPhone.Apps["contacts"] = {
     Func_Enter = function() end,
     Func_Primary = function()
 		net.Start("Tabphone_Call_Send")
-			net.WriteUInt(playershiz[TabMemory.SelectedPlayer].Entity:UserID(), 8)
+			net.WriteString(playershiz[TabMemory.SelectedPlayer].Entity:SteamID64())
 		net.SendToServer()
 		TabPhone.EnterApp("active_call")
         LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, 1, CHAN_STATIC)
@@ -271,7 +209,7 @@ TabPhone.Apps["contacts"] = {
             end
 
             draw.SimpleText(v.Name, "TabPhone32", 8+96+8, TotalScroll + ((i - 1) * (96+8))+48+8+8, sel and COL_FG or COL_BG)
-			draw.SimpleText(v.Entity:UserID(), "TabPhone24", (BARRIER_FLIPPHONE-16-8), TotalScroll + ((i - 1) * (96+8))+48+8+8 + (96-8-8 - 24), sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
+			draw.SimpleText(v.Entity:SteamID64(), "TabPhone16", (BARRIER_FLIPPHONE-16-8), TotalScroll + ((i - 1) * (96+8))+48+8+8 + (96-8-8 - 16), sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
 			if v.Icon then
 				surface.SetDrawColor(255, 255, 255)
 				surface.SetMaterial(v.Icon)
@@ -383,7 +321,7 @@ TabPhone.Apps["dialer"] = {
 	end,
     Func_Primary = function()
 		net.Start("Tabphone_Call_Send")
-			net.WriteUInt(tonumber(TabMemory.YouDial), 8)
+			net.WriteString(TabMemory.YouDial)
 		net.SendToServer()
 		TabPhone.EnterApp("active_call")
         LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, 1, CHAN_STATIC)
@@ -422,23 +360,26 @@ TabPhone.Apps["shopping"] = {
 }
 
 TabPhone.Apps["call"] = {
-    Name = "Fake Call",
+    Name = "Receiving Call",
     Icon = Material("fesiug/TabPhone/phone.png"),
     SortOrder = 0,
+	Hidden = true,
     Func_Enter = function()
-        local sound = TabPhone.RingtonePath .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
-        LocalPlayer():EmitSound(sound, 100, 100, 1, CHAN_STATIC)
     end,
-    Func_Primary = function()
-        local sound = TabPhone.RingtonePath .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
-        LocalPlayer():StopSound(sound)
-		TabPhone.EnterApp("active_call")
-	end,
-    Func_Secondary = function()
-        local sound = TabPhone.RingtonePath .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
-        LocalPlayer():StopSound(sound)
+    Func_Holster = function()
+		TabPhone.EndRingtone()
         TabPhone.EnterApp("mainmenu")
     end,
+    Func_Primary = function()
+		TabPhone.EndRingtone()
+		TabPhone.EnterApp("active_call")
+		net.Start("Tabphone_Call_Accept")
+		net.SendToServer()
+	end,
+    Func_Secondary = function()
+		TabPhone.EndRingtone()
+        TabPhone.EnterApp("mainmenu")
+	end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
 		TabMemory.LeftText = "ANSWER"
@@ -464,7 +405,12 @@ TabPhone.Apps["call"] = {
         surface.DrawRect((BARRIER_FLIPPHONE / 2) - tsn/2, 64 + 72, tsn, 32+4+4)
 		
         draw.SimpleText("INCOMING CALL", "TabPhone32", (BARRIER_FLIPPHONE / 2) + jiggy, 64 + 16 + jiggy2, COL_BG, TEXT_ALIGN_CENTER)
-        draw.SimpleText("Bank of Siple", "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + 72, COL_BG, TEXT_ALIGN_CENTER)
+		
+		local nick = "[???????]"
+		if TabMemory.CallingPlayer and TabMemory.CallingPlayer:IsValid() then
+			nick = TabMemory.CallingPlayer:Nick()
+		end
+        draw.SimpleText(nick, "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + 72, COL_BG, TEXT_ALIGN_CENTER)
     end,
 }
 
@@ -472,6 +418,7 @@ TabPhone.Apps["active_call"] = {
     Name = "Active Call",
     Icon = Material("fesiug/TabPhone/phone.png"),
     SortOrder = 0,
+	Hidden = true,
     Func_Enter = function()
 		TabMemory.CallStartTime = UnPredictedCurTime()
 		TabMemory.CallEndTime = math.huge
@@ -479,8 +426,9 @@ TabPhone.Apps["active_call"] = {
     Func_Primary = function()
 	end,
     Func_Secondary = function()
-        local sound = TabPhone.RingtonePath .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
-        LocalPlayer():StopSound(sound)
+        LocalPlayer():StopSound(TabPhone.GetRingtonePath())
+		net.Start("Tabphone_Call_HangUp")
+		net.SendToServer()
         TabPhone.EnterApp("mainmenu")
     end,
     Func_Reload = function() end,
@@ -499,7 +447,7 @@ TabPhone.Apps["active_call"] = {
 		end
 
 		local calllength = ""--
-		if false then
+		if TabMemory.CallStatus == "incall" then
 			local mrew = string.FormattedTime( UnPredictedCurTime()-TabMemory.CallStartTime )
 			calllength = string.format( "%02i:%02i:%02i", mrew.h, mrew.m, mrew.s )
 		elseif TabMemory.CallStatus == "calling" then
@@ -520,9 +468,17 @@ TabPhone.Apps["active_call"] = {
 		
 		surface.SetFont("TabPhone32")
 		surface.SetDrawColor(COL_FG)
-		local tsn = surface.GetTextSize(" Bank of Siple ")
+		local nick = "[???????]"
+		if TabMemory.CallingPlayer and TabMemory.CallingPlayer:IsValid() then
+			nick = TabMemory.CallingPlayer:Nick()
+		end
+		local tsn = surface.GetTextSize(" " .. nick .. " ")
         surface.DrawRect((BARRIER_FLIPPHONE / 2) - tsn/2, 64 + 16, tsn, 32+4+4)
-        draw.SimpleText("Bank of Siple", "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + 16, COL_BG, TEXT_ALIGN_CENTER)
+        draw.SimpleText(nick, "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + 16, COL_BG, TEXT_ALIGN_CENTER)
+		
+		local voicesize = Entity(2):VoiceVolume()*100*10
+		surface.SetDrawColor(COL_BG)
+        surface.DrawRect((BARRIER_FLIPPHONE / 2) - voicesize/2, 256 - voicesize/2, voicesize, voicesize)
     end,
 }
 

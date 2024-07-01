@@ -22,7 +22,7 @@ local IMAGE_BATTERY = Material("fesiug/TabPhone/battery.png")
 local IMAGE_CELL = Material("fesiug/TabPhone/cell2.png")
 
 TabMemory = TabMemory or {
-    ActiveApp = "mainmenu",
+    ActiveApp = false,
     --GallerySelected = 1,
     SelectedSetting = 1,
     Flash = false,
@@ -41,6 +41,7 @@ function TabPhone.EnterApp(name)
     local active = TabMemory.ActiveApp
     TabPhone.Apps[active].Func_Enter(from)
 end
+
 
 function TabPhone.Scroll(level, var, total)
     if not TabMemory[var] then
@@ -116,6 +117,9 @@ function SWEP:PostDrawViewModel(vm, ply, wep)
 end
 
 function SWEP:Think()
+
+	--print( TabMemory.CallStatus, TabMemory.CallStatus, TabMemory.CallStatus, TabMemory.CallStatus )
+
     if TabMemory.NextPhotoTime > UnPredictedCurTime() then return end
 
     --local dlight = DynamicLight( self:GetOwner():EntIndex() )

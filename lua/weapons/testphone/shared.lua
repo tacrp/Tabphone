@@ -57,13 +57,13 @@ function SWEP:QuickAnim(name)
 end
 
 function SWEP:Keypress()
-	self:EmitSound("fesiug/TabPhone/key_press" .. math.random(1, 7) .. ".wav", 70, 100, 0.4)
+	self:EmitSound("fesiug/TabPhone/key_press" .. math.random(1, 7) .. ".wav", 40, 100, 0.4)
 end
 
 function SWEP:PrimaryAttack()
 	self:QuickAnim("left")
 	self:Keypress()
-	self:EmitSound("fesiug/TabPhone/yea.ogg", 70, 100, 1, CHAN_STATIC)
+	self:EmitSound("fesiug/TabPhone/yea.ogg", 40, 100, 1, CHAN_STATIC)
 
 	if CLIENT and IsFirstTimePredicted() then
 		local active = TabMemory.ActiveApp
@@ -74,7 +74,7 @@ end
 function SWEP:SecondaryAttack()
 	self:QuickAnim("right")
 	self:Keypress()
-	self:EmitSound("fesiug/TabPhone/nae.ogg", 70, 100, 1, CHAN_STATIC)
+	self:EmitSound("fesiug/TabPhone/nae.ogg", 40, 100, 1, CHAN_STATIC)
 
 	if CLIENT and IsFirstTimePredicted() then
 		local active = TabMemory.ActiveApp
@@ -95,10 +95,24 @@ end
 
 function SWEP:Deploy()
 	self:QuickAnim("open")
-	self:EmitSound("fesiug/TabPhone/draw.ogg", 70, 100, 1)
+	self:EmitSound("fesiug/TabPhone/draw.ogg", 60, 100, 1)
 
 	if CLIENT and IsFirstTimePredicted() then
-		TabMemory.ActiveApp = "mainmenu"
+		if !TabMemory.ActiveApp then
+			TabMemory.ActiveApp = "mainmenu"
+		end
+	end
+
+	return true
+end
+
+function SWEP:Holster()
+	if CLIENT and IsFirstTimePredicted() then
+		local active = TabMemory.ActiveApp
+		local activeapp = TabPhone.Apps[active]
+		if activeapp.Func_Holster then
+			activeapp.Func_Holster()
+		end
 	end
 
 	return true
@@ -171,4 +185,78 @@ if CLIENT then
 			end
 		end
 	end)
+end
+
+TabPhone.RingtonePath = "fesiug/tabphone/ringtones/44khz/"
+TabPhone.Ringtones = {
+    "1.6.ogg",
+    "109.ogg",
+    "americafyeah.ogg",
+    "amongla.ogg",
+    "angrybirds.ogg",
+    "arab.ogg",
+    "Bassmatic.ogg",
+    "butterfly.ogg",
+    "callring.ogg",
+    "callring2.ogg",
+    "callring3_franklin.ogg",
+    "callring4.ogg",
+    "callring5.ogg",
+    "callring6_michael.ogg",
+    "callring7.ogg",
+    "callring8_trevor.ogg",
+    "clockring.ogg",
+    "Cool Room.ogg",
+    "Countryside.ogg",
+    "Credit Check.ogg",
+    "Dragon Brain.ogg",
+    "Drive.ogg",
+    "duvet.ogg",
+    "edgy.ogg",
+    "Fox.ogg",
+    "Funk in Time.ogg",
+    "Get Down.ogg",
+    "gutsberserk.ogg",
+    "High Seas.ogg",
+    "Hooker.ogg",
+    "Into Something.ogg",
+    "Katja's Waltz.ogg",
+    "Laidback.ogg",
+    "Malfunction.ogg",
+    "Mine Until Monday.ogg",
+    "Pager.ogg",
+    "Ringing 1.ogg",
+    "Ringing 2.ogg",
+    "russian.ogg",
+    "Science of Crime.ogg",
+    "sfx_sms.ogg",
+    "Solo.ogg",
+    "Spy.ogg",
+    "Standard Ring.ogg",
+    "Swing It.ogg",
+    "tailsofvalor.ogg",
+    "Take the Pain.ogg",
+    "Teeker.ogg",
+    "Text.ogg",
+    "textring.ogg",
+    "textring2.ogg",
+    "textring3.ogg",
+    "textring4.ogg",
+    "textring5.ogg",
+    "The One for Me.ogg",
+    "themanwhosoldtheworld.ogg",
+    "Tonight.ogg",
+    "valve.ogg",
+}
+
+function TabPhone.GetRingtonePath()
+	return TabPhone.RingtonePath .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
+end
+
+function TabPhone.StartRingtone()
+	LocalPlayer():EmitSound(TabPhone.GetRingtonePath(), 100, 100, 1, CHAN_STATIC)
+end
+
+function TabPhone.EndRingtone()
+	LocalPlayer():StopSound(TabPhone.GetRingtonePath())
 end
