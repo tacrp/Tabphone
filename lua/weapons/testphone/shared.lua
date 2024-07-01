@@ -45,6 +45,12 @@ end
 
 autoinclude(searchdir)
 
+function SWEP:GetTabPhoneVolume()
+	local vol = self:GetOwner():GetInfoNum("tabphone_volume", 5)
+
+	return vol / 10
+end
+
 function SWEP:QuickAnim(name)
 	local vm = self:GetOwner():GetViewModel()
 	vm:SetPlaybackRate(1)
@@ -58,7 +64,7 @@ end
 function SWEP:PrimaryAttack()
 	self:QuickAnim("left")
 	self:Keypress()
-	self:EmitSound("fesiug/tabphone/yea.ogg", 40, 100, 1, CHAN_STATIC)
+	self:EmitSound("fesiug/tabphone/yea.ogg", 40, 100, self:GetTabPhoneVolume(), CHAN_STATIC)
 
 	if CLIENT and IsFirstTimePredicted() then
 		local active = TabMemory.ActiveApp
@@ -69,7 +75,7 @@ end
 function SWEP:SecondaryAttack()
 	self:QuickAnim("right")
 	self:Keypress()
-	self:EmitSound("fesiug/tabphone/nae.ogg", 40, 100, 1, CHAN_STATIC)
+	self:EmitSound("fesiug/tabphone/nae.ogg", 40, 100, self:GetTabPhoneVolume(), CHAN_STATIC)
 
 	if CLIENT and IsFirstTimePredicted() then
 		local active = TabMemory.ActiveApp
@@ -166,7 +172,7 @@ if CLIENT then
 			elseif numb then
 				if active == "dialer" then
 					w:Keypress()
-					w:EmitSound("fesiug/tabphone/dialtone/" .. tostring(numb) .. ".ogg", 70, 100, 0.5, CHAN_STATIC)
+					w:EmitSound("fesiug/tabphone/dialtone/" .. tostring(numb) .. ".ogg", 70, 100, 0.5 * TabPhone.GetVolume(), CHAN_STATIC)
 					TabMemory.YouDial = TabMemory.YouDial .. tostring(numb)
 
 					return true
@@ -197,7 +203,7 @@ function TabPhone.GetRingtonePath()
 end
 
 function TabPhone.StartRingtone()
-	LocalPlayer():EmitSound(TabPhone.GetRingtonePath(), 100, 100, 1, CHAN_STATIC)
+	LocalPlayer():EmitSound(TabPhone.GetRingtonePath(), 100, 100, TabPhone.GetVolume(), CHAN_STATIC)
 end
 
 function TabPhone.EndRingtone()

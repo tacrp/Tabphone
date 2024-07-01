@@ -200,7 +200,7 @@ TabPhone.Apps["contacts"] = {
             net.WriteString(cachedplayers[TabMemory.SelectedPlayer].Entity:SteamID64())
             net.SendToServer()
             TabPhone.EnterApp("active_call")
-            LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, 1, CHAN_STATIC)
+            LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, TabPhone.GetVolume(), CHAN_STATIC)
         end
     end,
     Func_Secondary = function()
@@ -390,7 +390,7 @@ TabPhone.Apps["dialer"] = {
         net.WriteString(TabMemory.YouDial)
         net.SendToServer()
         TabPhone.EnterApp("active_call")
-        LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, 1, CHAN_STATIC)
+        LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, TabPhone.GetVolume(), CHAN_STATIC)
     end,
     Func_Secondary = function()
         TabPhone.EnterApp("mainmenu")
@@ -555,6 +555,14 @@ TabPhone.Apps["active_call"] = {
 --surface.DrawRect((BARRIER_FLIPPHONE / 2) - voicesize/2, 256 - voicesize/2, voicesize, voicesize)
 local settings_options = {
     {
+        label = "Volume",
+        min = 0,
+        max = 10,
+        convar = GetConVar("tabphone_volume"),
+        icon = Material("fesiug/tabphone/volume.png"),
+        type = "int"
+    },
+    {
         label = "Ringtone",
         icon = Material("fesiug/tabphone/phone.png"),
         min = 1,
@@ -567,7 +575,7 @@ local settings_options = {
 
             local sound = TabPhone.RingtonePath .. TabPhone.Ringtones[val]
             TabMemory.RingToneExample = CreateSound(LocalPlayer(), sound)
-            TabMemory.RingToneExample:Play()
+            TabMemory.RingToneExample:PlayEx(TabPhone.GetVolume(), 100)
         end,
         type = "int",
     },
@@ -728,7 +736,7 @@ TabPhone.Apps["camera"] = {
 
         timer.Simple(0, function()
             render.PushRenderTarget(cameratex, 0, 0, 512, 512)
-            surface.PlaySound("npc/scanner/scanner_photo1.wav")
+            surface.PlaySound("npc/scanner/scanner_photo1.wav", 100, 100, TabPhone.GetVolume())
 
             local rt = {
                 x = 0,
@@ -828,7 +836,7 @@ TabPhone.Apps["camera"] = {
         TabMemory.CameraZoom = math.Clamp(TabMemory.CameraZoom - level, 1, 10)
 
         if last ~= TabMemory.CameraZoom then
-            surface.PlaySound(level > 0 and "fesiug/tabphone/zoom_out.ogg" or "fesiug/tabphone/zoom_in.ogg")
+            LocalPlayer():EmitSound(level > 0 and "fesiug/tabphone/zoom_out.ogg" or "fesiug/tabphone/zoom_in.ogg", 100, 100, TabPhone.GetVolume())
         end
     end,
     Func_DrawScene = function()
@@ -1095,7 +1103,7 @@ TabPhone.Apps["gallery_deleter"] = {
     Name = "Image Deleter",
     Hidden = true,
     Func_Enter = function()
-        LocalPlayer():EmitSound("fesiug/tabphone/delete.ogg", 70, 100, 0.5, CHAN_STATIC)
+        LocalPlayer():EmitSound("fesiug/tabphone/delete.ogg", 70, 100, 0.5 * TabPhone.GetVolume(), CHAN_STATIC)
     end,
     Func_Reload = function() end,
     Func_Primary = function()

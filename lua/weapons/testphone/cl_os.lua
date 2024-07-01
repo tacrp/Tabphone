@@ -71,6 +71,12 @@ function TabPhone.Scroll(level, var, total)
     end
 end
 
+local volumevar = GetConVar("tabphone_volume")
+
+function TabPhone.GetVolume()
+    return volumevar:GetInt() / 10
+end
+
 function SWEP:PreDrawViewModel(vm, wep, ply)
     TabMemory.LeftText = "SELECT"
     TabMemory.RightText = "BACK"

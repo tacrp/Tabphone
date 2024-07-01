@@ -65,12 +65,12 @@ if CLIENT then
 			chat.AddText("Busy")
 			TabMemory.CallStatus = "busy"
 			TabMemory.CallEndTime = UnPredictedCurTime()
-			LocalPlayer():EmitSound("fesiug/tabphone/delete.ogg", 100, 100, 1, CHAN_STATIC)
+			LocalPlayer():EmitSound("fesiug/tabphone/delete.ogg", 100, 100, TabPhone.GetVolume(), CHAN_STATIC)
 		elseif Reason == TP_CALLDECLINE_ENDED then
 			chat.AddText("Call ended")
 			TabMemory.CallStatus = "callended"
 			TabMemory.CallEndTime = UnPredictedCurTime()
-			LocalPlayer():EmitSound("fesiug/tabphone/delete.ogg", 100, 100, 1, CHAN_STATIC)
+			LocalPlayer():EmitSound("fesiug/tabphone/delete.ogg", 100, 100, TabPhone.GetVolume(), CHAN_STATIC)
 		end
 	end)
 
