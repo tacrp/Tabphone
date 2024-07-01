@@ -140,42 +140,163 @@ TabPhone.Apps["mainmenu"] = {
     Func_Draw = function(w, h)
 		TabMemory.RightText = "QUIT"
 		local Sortedapps = GetApps()
+		
+		-- Scroll math
+		local longestscroll = 0
+        for i, prev in ipairs(Sortedapps) do
+            local sel = i == TabMemory.Selected
 
+			local Sy = ((i - 1) * (48 + 8)) + 48 + 8
+
+			if Sy > (512-48-40) then
+				longestscroll = math.max( -((512-48-40-8)-Sy), longestscroll )
+			end
+			
+			if sel then
+				if (Sy+TabMemory.TotalScroll) > (512-48-40) then
+					TabMemory.TotalScroll = (512-48-40-8)-Sy
+				elseif (Sy+TabMemory.TotalScroll) <= (48+8) then
+					TabMemory.TotalScroll = (48+8)-Sy
+				end
+			end
+		end
+		local TotalScroll = TabMemory.TotalScroll
+
+		-- App logic
         for i, prev in ipairs(Sortedapps) do
             local v = TabPhone.Apps[prev]
             local sel = i == TabMemory.Selected
             surface.SetDrawColor(COL_BG)
 
             if sel then
-                surface.DrawRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52)
+                surface.DrawRect(8, TotalScroll + ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8 - 8, 52)
             else
-                surface.DrawOutlinedRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52, 4)
+                surface.DrawOutlinedRect(8, TotalScroll + ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8 - 8, 52, 4)
             end
 
-            draw.SimpleText(v.Name, "TabPhone32", 8 + 8 + 8 + 8 + 8 + 32, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
+            draw.SimpleText(v.Name, "TabPhone32", 8 + 8 + 8 + 8 + 8 + 32, TotalScroll + ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
             surface.SetDrawColor(sel and COL_FG or COL_BG)
             surface.SetMaterial(v.Icon)
-            surface.DrawTexturedRect(8 + 8 + 4 + 4, ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
+            surface.DrawTexturedRect(8 + 8 + 4 + 4, TotalScroll + ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
         end
+
+		-- Scroll logic
+		local fulllength = 512-48-40-8-8
+		local annoyingmath = (512-48-40-8)/((512-48-40-8)-longestscroll)
+		local length = fulllength / annoyingmath
+
+		local s_per
+		if longestscroll <= 0 then
+			s_per = 0
+		else
+			s_per = (-TotalScroll)/(longestscroll)
+		end
+
+		local endpos = ((48+8) + (512-48-40-8-4)*s_per) - length*s_per
+
+		surface.SetDrawColor( COL_BG )
+		surface.DrawRect( BARRIER_FLIPPHONE-12, endpos, 6, length )
     end,
 }
+
+local playershiz = {}
 
 TabPhone.Apps["contacts"] = {
     Name = "Contacts",
     Icon = Material("fesiug/TabPhone/contact.png"),
     SortOrder = -1009,
     Func_Enter = function() end,
-    Func_Primary = function() end,
+    Func_Primary = function()
+		net.Start("Tabphone_Call_Send")
+			net.WriteUInt(playershiz[TabMemory.SelectedPlayer].Entity:UserID(), 8)
+		net.SendToServer()
+		TabPhone.EnterApp("active_call")
+        LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, 1, CHAN_STATIC)
+	end,
     Func_Secondary = function()
 		TabPhone.EnterApp("mainmenu")
     end,
+    Func_Scroll = function(level)
+        TabPhone.Scroll(level, "SelectedPlayer", #playershiz)
+	end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
-        draw.SimpleText("Players online:", "TabPhone24", 8, 8 + 48, COL_BG)
-
+		TabMemory.LeftText = ""
+		playershiz = {}
         for i, v in player.Iterator() do
-            draw.SimpleText(v:Nick(), "TabPhone32", 8, 8 + 48 + 24 + ((i - 1) * 32), COL_BG)
+			local pd = { Entity = v, Name = v:Nick() }
+			if TabMemory.TempPFP then
+				pd.Icon = Material("data/arcrp_photos/thumbs/" .. TabMemory.TempPFP)
+			end
+			table.insert( playershiz, pd )
         end
+
+		-- Scroll math
+		local longestscroll = 0
+        for i, prev in ipairs(playershiz) do
+            local sel = i == TabMemory.SelectedPlayer
+
+			local Sy = ((i - 1) * (96+8))+8
+			local Sh = 96
+			local Ty = Sy+Sh
+
+			if Ty > (512-48-40) then
+				longestscroll = math.max( -((512-48-40-8)-Ty), longestscroll )
+			end
+			
+			if sel then
+				if (Ty+TabMemory.TotalScrollContacts) > (512-48-40) then
+					TabMemory.TotalScrollContacts = (512-48-40-8)-Ty
+				elseif (Sy+TabMemory.TotalScrollContacts) <= (48+8) then
+					TabMemory.TotalScrollContacts = math.min( 0, (48+8)-Sy )
+				end
+			end
+		end
+		local TotalScroll = TabMemory.TotalScrollContacts
+
+		-- App logic
+        for i, v in ipairs(playershiz) do
+			local sel = i == TabMemory.SelectedPlayer
+            surface.SetDrawColor(COL_BG)
+
+            if sel then
+                surface.DrawRect(8, TotalScroll + ((i - 1) * (96+8))+48+8, BARRIER_FLIPPHONE-8-8-8, 96)
+				if v.Entity == LocalPlayer() then
+					TabMemory.LeftText = ""
+				else
+					TabMemory.LeftText = "CALL"
+				end
+            else
+                surface.DrawOutlinedRect(8, TotalScroll + ((i - 1) * (96+8))+48+8, BARRIER_FLIPPHONE-8-8-8, 96, 4)
+            end
+
+            draw.SimpleText(v.Name, "TabPhone32", 8+96+8, TotalScroll + ((i - 1) * (96+8))+48+8+8, sel and COL_FG or COL_BG)
+			draw.SimpleText(v.Entity:UserID(), "TabPhone24", (BARRIER_FLIPPHONE-16-8), TotalScroll + ((i - 1) * (96+8))+48+8+8 + (96-8-8 - 24), sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
+			if v.Icon then
+				surface.SetDrawColor(255, 255, 255)
+				surface.SetMaterial(v.Icon)
+				surface.DrawTexturedRect(8, TotalScroll + ((i - 1) * (96+8))+48+8, 96, 96)
+				surface.SetDrawColor(COL_BG)
+				surface.DrawOutlinedRect(8, TotalScroll + ((i - 1) * (96+8))+48+8, 96, 96, 4)
+			end
+        end
+
+		-- Scroll logic
+		local fulllength = 512-48-40-8-8
+		local annoyingmath = (512-48-40-8)/((512-48-40-8)-longestscroll)
+		local length = fulllength / annoyingmath
+
+		local s_per
+		if longestscroll <= 0 then
+			s_per = 0
+		else
+			s_per = (-TotalScroll)/(longestscroll)
+		end
+
+		local endpos = ((48+8) + (512-48-40-8-4)*s_per) - length*s_per
+
+		surface.SetDrawColor( COL_BG )
+		surface.DrawRect( BARRIER_FLIPPHONE-12, endpos, 6, length )
     end,
 }
 
@@ -250,11 +371,7 @@ TabPhone.Apps["calendar"] = {
         TabPhone.EnterApp("mainmenu")
     end,
     Func_Reload = function() end,
-    Func_Draw = function(w, h)
-        for i = 0, 10 do
-            draw.SimpleText("WORK IN PROGRESS", "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + (i * (32 + 4)), COL_BG, TEXT_ALIGN_CENTER)
-        end
-	end,
+    Func_Draw = function(w, h) end,
 }
 
 TabPhone.Apps["dialer"] = {
@@ -264,7 +381,13 @@ TabPhone.Apps["dialer"] = {
     Func_Enter = function()
 		TabMemory.YouDial = ""
 	end,
-    Func_Primary = function() end,
+    Func_Primary = function()
+		net.Start("Tabphone_Call_Send")
+			net.WriteUInt(tonumber(TabMemory.YouDial), 8)
+		net.SendToServer()
+		TabPhone.EnterApp("active_call")
+        LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, 1, CHAN_STATIC)
+	end,
     Func_Secondary = function()
         TabPhone.EnterApp("mainmenu")
     end,
@@ -306,7 +429,11 @@ TabPhone.Apps["call"] = {
         local sound = TabPhone.RingtonePath .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
         LocalPlayer():EmitSound(sound, 100, 100, 1, CHAN_STATIC)
     end,
-    Func_Primary = function() end,
+    Func_Primary = function()
+        local sound = TabPhone.RingtonePath .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
+        LocalPlayer():StopSound(sound)
+		TabPhone.EnterApp("active_call")
+	end,
     Func_Secondary = function()
         local sound = TabPhone.RingtonePath .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
         LocalPlayer():StopSound(sound)
@@ -338,6 +465,64 @@ TabPhone.Apps["call"] = {
 		
         draw.SimpleText("INCOMING CALL", "TabPhone32", (BARRIER_FLIPPHONE / 2) + jiggy, 64 + 16 + jiggy2, COL_BG, TEXT_ALIGN_CENTER)
         draw.SimpleText("Bank of Siple", "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + 72, COL_BG, TEXT_ALIGN_CENTER)
+    end,
+}
+
+TabPhone.Apps["active_call"] = {
+    Name = "Active Call",
+    Icon = Material("fesiug/TabPhone/phone.png"),
+    SortOrder = 0,
+    Func_Enter = function()
+		TabMemory.CallStartTime = UnPredictedCurTime()
+		TabMemory.CallEndTime = math.huge
+    end,
+    Func_Primary = function()
+	end,
+    Func_Secondary = function()
+        local sound = TabPhone.RingtonePath .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
+        LocalPlayer():StopSound(sound)
+        TabPhone.EnterApp("mainmenu")
+    end,
+    Func_Reload = function() end,
+    Func_Draw = function(w, h)
+		if ((TabMemory.CallEndTime or math.huge)+1 <= CurTime()) then TabPhone.EnterApp("mainmenu") return end
+		TabMemory.LeftText = ""
+		TabMemory.RightText = "HANG UP"
+        surface.SetDrawColor(COL_FG)
+        surface.DrawRect(0, 0, 512, 512)
+		
+		if TabMemory.TempPFP then
+			surface.SetMaterial( Material("data/arcrp_photos/" .. TabMemory.TempPFP) )
+			surface.SetDrawColor(255, 255, 255)
+			local super = (512-48-40)
+			surface.DrawTexturedRect(w/2 - super/2, (((512+48)/2) - (40/2)) - (super/2), super, super)
+		end
+
+		local calllength = ""--
+		if false then
+			local mrew = string.FormattedTime( UnPredictedCurTime()-TabMemory.CallStartTime )
+			calllength = string.format( "%02i:%02i:%02i", mrew.h, mrew.m, mrew.s )
+		elseif TabMemory.CallStatus == "calling" then
+			calllength = "Calling..."
+		elseif TabMemory.CallStatus == "busy" then
+			calllength = "BUSY"
+		elseif TabMemory.CallStatus == "callended" then
+			calllength = "CALL ENDED"
+		else
+			calllength = "...??"
+		end
+
+		surface.SetFont("TabPhone32")
+		local tsn = surface.GetTextSize(" "..calllength.." ")
+		surface.SetDrawColor(COL_FG)
+		surface.DrawRect((BARRIER_FLIPPHONE / 2) - tsn/2, 64 + 72, tsn, 32+4+4)
+		draw.SimpleText(calllength, "TabPhone32", (BARRIER_FLIPPHONE / 2), 64 + 72, COL_BG, TEXT_ALIGN_CENTER)
+		
+		surface.SetFont("TabPhone32")
+		surface.SetDrawColor(COL_FG)
+		local tsn = surface.GetTextSize(" Bank of Siple ")
+        surface.DrawRect((BARRIER_FLIPPHONE / 2) - tsn/2, 64 + 16, tsn, 32+4+4)
+        draw.SimpleText("Bank of Siple", "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + 16, COL_BG, TEXT_ALIGN_CENTER)
     end,
 }
 

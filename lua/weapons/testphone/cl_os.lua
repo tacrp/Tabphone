@@ -27,6 +27,10 @@ TabMemory = TabMemory or {
     SelectedSetting = 1,
     Flash = false,
     NextPhotoTime = 0,
+    TotalScroll = 0,
+    SelectedPlayer = 1,
+    TotalScrollContacts = 0,
+	CallEndTime = math.huge,
 	YouDial = "",
 }
 
