@@ -208,9 +208,11 @@ TabPhone.Apps["contacts"] = {
         elseif TabMemory.ContactsMode == "contact" then
             if not IsValid(ply.Entity) then
                 TabMemory.CallingPlayer = nil
+                TabMemory.CallingContact = ply
                 TabPhone.EnterApp("active_call")
                 LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, TabPhone.GetVolume(), CHAN_STATIC)
             else
+                TabMemory.CallingPlayer = ply.Entity
                 net.Start("Tabphone_Call_Send")
                 net.WriteString(ply.Entity:SteamID64())
                 net.SendToServer()
@@ -767,6 +769,8 @@ TabPhone.Apps["active_call"] = {
 
         if TabMemory.CallingPlayer then
             pfp = GetProfilePic("SteamID:" .. TabMemory.CallingPlayer:SteamID64())
+        elseif TabMemory.CallingContact then
+            pfp = TabMemory.CallingContact.Icon
         end
 
         if pfp then
@@ -802,6 +806,8 @@ TabPhone.Apps["active_call"] = {
 
         if TabMemory.CallingPlayer and TabMemory.CallingPlayer:IsValid() then
             nick = TabMemory.CallingPlayer:Nick()
+        elseif TabMemory.CallingContact then
+            pfp = TabMemory.CallingContact.Name
         end
 
         local tsn = surface.GetTextSize(" " .. nick .. " ")
