@@ -239,7 +239,7 @@ function TabPhone.EndRingtone()
 	LocalPlayer():StopSound(TabPhone.GetRingtonePath())
 end
 
-local vmposes = {vector_origin, Vector(-1.5, 0, 0), Vector(-0.9, -1.5, 0.4), Vector(-1.5, -1.5, 0.4),}
+local vmposes = { vector_origin, Vector( -0.9, -1.5, 0.4 ), Vector( -1.5, 0, 0 ), Vector( -2, -1.5, 0.4 ) }
 
 function SWEP:GetViewModelPosition(pos, ang)
 	local mover = vmposes[GetConVar("tabphone_vmpos"):GetInt()]

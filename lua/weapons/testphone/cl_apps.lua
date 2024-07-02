@@ -637,6 +637,21 @@ TabPhone.Apps["dialer"] = {
     end,
 }
 
+local itemstobuy = {
+	{
+		["Name"] = "Washing Machine",
+	},
+	{
+		["Name"] = "Blood Cleaner",
+	},
+	{
+		["Name"] = "Automatic Weapons",
+	},
+	{
+		["Name"] = "Body Bags",
+	},
+}
+
 TabPhone.Apps["shopping"] = {
     Name = "Shopping",
     Icon = Material("fesiug/tabphone/shopper.png"),
@@ -647,7 +662,23 @@ TabPhone.Apps["shopping"] = {
         TabPhone.EnterApp("mainmenu")
     end,
     Func_Reload = function() end,
-    Func_Draw = function(w, h) end,
+    Func_Scroll = function(level)
+        TabPhone.Scroll(level, "Shopping_Selected", #itemstobuy)
+	end,
+    Func_Draw = function(w, h)
+		local sw, sh = 16, 48 + 16
+		for i, v in ipairs( itemstobuy ) do
+			local sel = (TabMemory.Shopping_Selected or 1) == i
+			draw.SimpleText(v.Name, "TabPhone24", sw, sh, COL_BG)
+			if sel then
+				draw.SimpleText(v.Name, "TabPhone24", sw+2, sh, COL_BG)
+
+				surface.SetDrawColor( COL_BG )
+				surface.DrawRect( sw-4, sh+24+1, surface.GetTextSize( v.Name ) + 8+2, 3 )
+			end
+			sh = sh + 4 + 24
+		end
+	end,
 }
 
 TabPhone.Apps["call"] = {
