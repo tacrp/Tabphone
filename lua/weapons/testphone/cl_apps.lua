@@ -439,8 +439,13 @@ TabPhone.Apps["messages_sender"] = {
     end,
     Func_Primary = function()
         if TabPhone_MessageDebounceTime > CurTime() then return end
-        local ply = cachedplayers[TabMemory.SelectedPlayer].Entity
-        TabPhone.SendMessage(ply, temp_message)
+        local ply = cachedplayers[TabMemory.SelectedPlayer]
+
+        if IsValid(ply.Entity) then
+            TabPhone.SendMessage(ply.Entity, temp_message)
+        else
+            TabPhone.SendMessage(ply.ID, temp_message)
+        end
         TabPhone.EnterApp("messages_viewer")
     end,
     Func_Secondary = function()
