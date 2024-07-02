@@ -15,6 +15,11 @@ for i, v in pairs(sizes) do
         size = v,
         antialias = false,
     })
+    surface.CreateFont("TabPhone" .. v .. "B", {
+        font = "HD44780A00 5x8 Regular",
+        size = v,
+        antialias = false,
+    })
 end
 
 local BARRIER_FLIPPHONE = 404
@@ -27,7 +32,7 @@ local IMAGE_CELL3 = Material("fesiug/TabPhone/cell3.png")
 local SIGNAL_IMAGES = {IMAGE_CELL1, IMAGE_CELL2, IMAGE_CELL3}
 
 TabMemory = TabMemory or {
-    ActiveApp = false,
+    ActiveApp = "mainmenu",
     LastApp = false,
     --GallerySelected = 1,
     SelectedSetting = 1,
@@ -102,7 +107,9 @@ function SWEP:PreDrawViewModel(vm, wep, ply)
     surface.DrawRect(0, 0, 512, 512)
     local active = TabMemory.ActiveApp
     local activeapp = TabPhone.Apps[active]
-    activeapp.Func_Draw(405, 512)
+	if activeapp then
+    	activeapp.Func_Draw(BARRIER_FLIPPHONE, 512)
+	end
     local blah = ColorAlpha(COL_FG, math.Clamp(math.Remap(UnPredictedCurTime(), TabMemory.PageSwitchTime or 0, (TabMemory.PageSwitchTime or 0) + 0.2, 1, 0), 0, 1) * 255)
     surface.SetDrawColor(blah)
     surface.DrawRect(0, 48, 512, 512 - 32 - 8)
