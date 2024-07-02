@@ -74,6 +74,12 @@ if CLIENT then
 			msg = lines,
 			lines = table.Count(lines)
 		})
+
+		if !GetConVar("tabphone_dnd"):GetBool() then
+			TabPhone.PlayNotiftone()
+		end
+
+		TabMemory.UnreadMessages[id] = true
 	end)
 
 	function TabPhone.SendMessage(ply, message)

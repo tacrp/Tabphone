@@ -24,11 +24,7 @@ local IMAGE_CELL1 = Material("fesiug/TabPhone/cell1.png")
 local IMAGE_CELL2 = Material("fesiug/TabPhone/cell2.png")
 local IMAGE_CELL3 = Material("fesiug/TabPhone/cell3.png")
 
-local SIGNAL_IMAGES = {
-    IMAGE_CELL1,
-    IMAGE_CELL2,
-    IMAGE_CELL3
-}
+local SIGNAL_IMAGES = {IMAGE_CELL1, IMAGE_CELL2, IMAGE_CELL3}
 
 TabMemory = TabMemory or {
     ActiveApp = false,
@@ -48,24 +44,29 @@ TabMemory = TabMemory or {
     ProfilePictures = {},
     ProfilePicturesMats = {},
     MessageHistory = {},
+    UnreadMessages = {},
     ContactsMode = "contacts",
     MessageScroll = 0
 }
 
 function TabPhone.EnterApp(name)
     local from = TabMemory.ActiveApp
-	TabMemory.LastApp = from
-	do
-		local active = TabMemory.LastApp
-		local activeapp = TabPhone.Apps[active]
-		if activeapp and activeapp.Func_Leave then
-			TabPhone.Apps[active].Func_Leave(name)
-		end
-	end
+    TabMemory.LastApp = from
+
+    do
+        local active = TabMemory.LastApp
+        local activeapp = TabPhone.Apps[active]
+
+        if activeapp and activeapp.Func_Leave then
+            TabPhone.Apps[active].Func_Leave(name)
+        end
+    end
+
     TabMemory.ActiveApp = name
     TabMemory.PageSwitchTime = UnPredictedCurTime()
     local active = TabMemory.ActiveApp
     local activeapp = TabPhone.Apps[active]
+
     if activeapp and activeapp.Func_Enter then
         TabPhone.Apps[active].Func_Enter(from)
     end
@@ -117,7 +118,6 @@ function SWEP:PreDrawViewModel(vm, wep, ply)
 
     if (TabMemory.NextChangeSignal or 0) < CurTime() then
         TabMemory.CellSignal = math.random(1, #SIGNAL_IMAGES)
-
         TabMemory.NextChangeSignal = CurTime() + math.Rand(10, 30)
     end
 
