@@ -597,10 +597,10 @@ TabPhone.Apps["messages_viewer"] = {
                     if MsgData.yours then
 						surface.SetDrawColor(COL_FG)
 						surface.DrawRect( w - tsn - 8 - 8 - 8, v_y, tsn + 8 + 8, TEXTTALL + 4 + 4 )
-                        draw.SimpleText(ts, "TabPhone"..TEXTTALL, w - 8 - 8, v_y, COL_BG, TEXT_ALIGN_RIGHT)
+                        draw.SimpleText(ts, "TabPhone"..TEXTTALL, w - 8 - 8, v_y+2, COL_BG, TEXT_ALIGN_RIGHT)
                     else
                         surface.DrawRect( 8, v_y, tsn + 16, TEXTTALL + 4 + 4 )
-                        draw.SimpleText(ts, "TabPhone"..TEXTTALL, 8 + 8, v_y, COL_FG, TEXT_ALIGN_LEFT)
+                        draw.SimpleText(ts, "TabPhone"..TEXTTALL, 8 + 8, v_y+2, COL_FG, TEXT_ALIGN_LEFT)
                     end
                 end
 
@@ -917,7 +917,7 @@ local settings_options = {
         label = "Chat Size",
         icon = Material("fesiug/tabphone/message.png"),
         min = 1,
-        max = 5,
+        max = 3,
         convar = GetConVar("tabphone_chatsize"),
         type = "int",
     },
