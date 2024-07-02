@@ -303,7 +303,7 @@ TabPhone.Apps["contacts"] = {
 
         -- App logic
         for i, v in ipairs(cachedplayers) do
-            local sel = i == TabMemory.SelectedPlayer
+            local sel = i == TabMemory.SelectedPlayer or (TabMemory.ContactsMode == "message" and TabMemory.UnreadMessages[v.ID] and (CurTime() % 1 > 0.5))
             surface.SetDrawColor(COL_BG)
 
             if sel then
@@ -316,13 +316,15 @@ TabPhone.Apps["contacts"] = {
                         TabMemory.LeftText = "SET"
                     elseif TabMemory.ContactsMode == "contact" then
                         TabMemory.LeftText = "CALL"
+                    elseif TabMemory.ContactsMode == "message" then
+                        TabMemory.LeftText = "MESSAGE"
                     end
                 end
             else
                 surface.DrawOutlinedRect(8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8 - 8, 96, 4)
             end
 
-            draw.SimpleText(v.Name, "TabPhone32", 8 + 96 + 8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
+            draw.SimpleText(v.Name, "TabPhone24", 8 + 96 + 8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
             local textr = v.Number
 
             if TabMemory.ContactsMode == "message" then
@@ -332,17 +334,17 @@ TabPhone.Apps["contacts"] = {
                 local id = v.ID
 
                 if history[#history] then
-                    textr = history[#history].msg[1]
+                    textr = history[#history].msg
                 end
 
                 if TabMemory.UnreadMessages[id] and (CurTime()) % 1 > 0.5 then
                     textr = "NEW MESSAGE!"
                 end
 
-                local maxlen = 22
+                local maxlen = 21
 
                 if string.len(textr) > maxlen then
-                    textr = string.sub(textr, 1, maxlen - 3) .. "..."
+                    textr = string.sub(textr, 1, maxlen - 2) .. ".."
                 end
             end
 
@@ -395,7 +397,7 @@ TabPhone.Apps["messages"] = {
     end,
 }
 
-local temp_message = ""
+temp_message = temp_message or ""
 TabPhone_MessageDebounceTime = 0
 
 TabPhone.Apps["messages_sender"] = {
@@ -430,7 +432,6 @@ TabPhone.Apps["messages_sender"] = {
         end
 
         function SuperTextEntry:OnValueChange(value)
-			value = value:Trim()
             if string.len(value) > 200 then
                 value = value:Left(200)
                 self:SetValue(value)
@@ -457,6 +458,9 @@ TabPhone.Apps["messages_sender"] = {
 	Func_Leave = function()
 		SuperTextFrame:Remove()
 	end,
+	Func_Holster = function()
+        TabPhone.EnterApp("messages_viewer")
+	end,
     Func_Secondary = function()
         TabPhone.EnterApp("messages_viewer")
     end,
@@ -481,19 +485,18 @@ TabPhone.Apps["messages_sender"] = {
         end
 
         draw.SimpleText("To: " .. ply.Name, "TabPhone24", 8 + 48 + 8 + 4, 8 + 48 + 4, COL_FG)
-        local message_lines = TabPhone.SplitIntoLines(temp_message)
+        local message_lines = TabPhone.SIL(temp_message, 404-16-16, "TabPhone24")
         surface.SetFont("TabPhone24")
         surface.SetDrawColor(COL_BG)
         local v_y = 120
-        local v_x = 0
-        v_y = v_y - 32 * math.max(#message_lines - 11, 0)
+        local v_x = 16
 
         for _, ts in ipairs(message_lines) do
+			--if (_ == 1 and ts == "") then v_y = v_y + 32 break end
             if v_y > 0 and v_y < h then
                 local tsn = surface.GetTextSize(ts)
-                draw.SimpleText(ts, "TabPhone24", -4, v_y, COL_BG)
-                last_char = ts:Right(1)
-                v_x = tsn
+                draw.SimpleText(ts, "TabPhone24", 16, v_y, COL_BG)
+                v_x = 16+tsn
             end
 
             v_y = v_y + 32
@@ -507,23 +510,28 @@ TabPhone.Apps["messages_sender"] = {
     end
 }
 
+local ChatSizes = {16, 24, 32}
+
 TabPhone.Apps["messages_viewer"] = {
     Hidden = true,
     Func_Enter = function()
         TabMemory.MessageScroll = 0
     end,
     Func_Scroll = function(level)
+		local TEXTTALL = ChatSizes[GetConVar("tabphone_chatsize"):GetInt()-4]
+
         local min = 0
-        local max = -320
+        local max = -320 - 40
         local ply = cachedplayers[TabMemory.SelectedPlayer]
 
-        for _, msg in ipairs(GetMessageHistory(ply.ID)) do
-            max = max + msg.lines * 32
+        for _, MsgData in ipairs(GetMessageHistory(ply.ID)) do
+			local msgsplit = TabPhone.SIL( MsgData.msg, 404-16-16, "TabPhone"..TEXTTALL )
+            max = max + #msgsplit * (TEXTTALL+8)
             max = max + 8
         end
 
         max = math.max(max, 0)
-        TabMemory.MessageScroll = TabMemory.MessageScroll - (level * 32)
+        TabMemory.MessageScroll = TabMemory.MessageScroll - (level * (TEXTTALL+8))
         TabMemory.MessageScroll = math.Clamp(TabMemory.MessageScroll, min, max)
     end,
     Func_Primary = function()
@@ -535,6 +543,8 @@ TabPhone.Apps["messages_viewer"] = {
     Func_Reload = function()
     end,
     Func_Draw = function(w, h)
+		local TEXTTALL = ChatSizes[GetConVar("tabphone_chatsize"):GetInt()]
+
         TabMemory.LeftText = "REPLY"
         surface.SetDrawColor(COL_BG)
         surface.DrawRect(0, 48, 512, 48 + 4 + 4)
@@ -555,44 +565,49 @@ TabPhone.Apps["messages_viewer"] = {
 
         draw.SimpleText(ply.Name, "TabPhone24", 8 + 48 + 8 + 4, 8 + 48 + 4, COL_FG)
         render.SetScissorRect(0, 104, w, h, true)
-        local v_y = 512 - 40 - 8 - (24 + 4) - 4 + TabMemory.MessageScroll
+        local v_y = 512 - 40 - 8 - (TEXTTALL + 4) - 4 + TabMemory.MessageScroll
+		v_y = v_y + (TEXTTALL+8)
         local history = GetMessageHistory(ply.ID)
 
         for i = 1, #history do
-            local msg = history[#history - i + 1]
-            surface.SetFont("TabPhone24")
+            local MsgData = history[#history - i + 1]
+			local msgsplit = TabPhone.SIL( MsgData.msg, 404-16-16, "TabPhone"..TEXTTALL )
+            surface.SetFont("TabPhone"..TEXTTALL)
             surface.SetDrawColor(COL_BG)
-            v_y = v_y - (32 * msg.lines)
+            v_y = v_y - ((TEXTTALL+8) * #msgsplit)
 
-            for _, ts in ipairs(msg.msg) do
-                if v_y > 0 and v_y < h then
-					surface.SetFont("TabPhone24")
+			local backup = v_y
+            for _, ts in ipairs(msgsplit) do
+                if backup > 0 and backup < h then
+                    if !MsgData.yours then continue end
+					surface.SetFont("TabPhone"..TEXTTALL)
 					local tsn = surface.GetTextSize(ts)
 
-                    if msg.yours then
-                        surface.DrawOutlinedRect(
-							w - tsn - 8 - 8 - 8,-- - 4 - tsn,
-							v_y,
-							tsn + 8 + 8,
-							24 + 4 + 4,
-							2
-						)
-                        draw.SimpleText(ts, "TabPhone24", w - 8 - 8, v_y, COL_BG, TEXT_ALIGN_RIGHT)
+					surface.SetDrawColor(COL_BG)
+					surface.DrawRect( w - tsn - 8 - 8 - 8 - (2), backup - (2), tsn + 8 + 8 + (4), TEXTTALL + 4 + 4 + (4) )
+				end
+                backup = backup + (TEXTTALL+8)
+			end
+
+            for _, ts in ipairs(msgsplit) do
+                if v_y > 0 and v_y < h then
+					surface.SetFont("TabPhone"..TEXTTALL)
+					local tsn = surface.GetTextSize(ts)
+
+                    if MsgData.yours then
+						surface.SetDrawColor(COL_FG)
+						surface.DrawRect( w - tsn - 8 - 8 - 8, v_y, tsn + 8 + 8, TEXTTALL + 4 + 4 )
+                        draw.SimpleText(ts, "TabPhone"..TEXTTALL, w - 8 - 8, v_y, COL_BG, TEXT_ALIGN_RIGHT)
                     else
-                        surface.DrawRect(
-							8,
-							v_y,
-							tsn,
-							24 + 4 + 4
-						)
-                        draw.SimpleText(ts, "TabPhone24", 8, v_y, COL_FG, TEXT_ALIGN_LEFT)
+                        surface.DrawRect( 8, v_y, tsn + 16, TEXTTALL + 4 + 4 )
+                        draw.SimpleText(ts, "TabPhone"..TEXTTALL, 8 + 8, v_y, COL_FG, TEXT_ALIGN_LEFT)
                     end
                 end
 
-                v_y = v_y + 32
+				v_y = v_y + (TEXTTALL+8)
             end
 
-            v_y = v_y - (32 * msg.lines)
+            v_y = v_y - ((TEXTTALL+8) * #msgsplit)
             v_y = v_y - 8
         end
 
@@ -896,6 +911,14 @@ local settings_options = {
         min = 1,
         max = 4,
         convar = GetConVar("tabphone_vmpos"),
+        type = "int",
+    },
+    {
+        label = "Chat Size",
+        icon = Material("fesiug/tabphone/message.png"),
+        min = 1,
+        max = 5,
+        convar = GetConVar("tabphone_chatsize"),
         type = "int",
     },
     {

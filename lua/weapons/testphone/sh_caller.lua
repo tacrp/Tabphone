@@ -24,38 +24,68 @@ TP_CALLCONFIRM_SMARTASS = 4
 TP_CALLCONFIRM_ANSWERED = 5
 
 if CLIENT then
-	local maxlinelen = 21
-
-	function TabPhone.SplitIntoLines(msg)
-		local words_pre = string.Split(msg, " ")
-		local words = {}
-
-		for _, word in ipairs(words_pre) do
-			if string.len(word) > maxlinelen then
-				local split = math.ceil(string.len(word) / maxlinelen)
-
-				for i = 0, split - 1 do
-					table.insert(words, string.sub(word, i * maxlinelen + 1, (i + 1) * maxlinelen))
-				end
-			else
-				table.insert(words, word)
-			end
-		end
-		local lines = {}
+	function TabPhone.SIL(text, maxw, font)
+		local content = {}
+		local tline = ""
 		local x = 0
-		for _, word in ipairs(words) do
-			local next_x = x + string.len(word) + 1
+		surface.SetFont(font)
+	
+		local ts = surface.GetTextSize(" ")
+	
+		local newlined = string.Explode("\n", text)
+	
+		for _newlines, line in ipairs(newlined) do
+			local words = string.Explode("%s", line, true)
+	
+			for _words, word in ipairs(words) do
+				local tx = surface.GetTextSize(word)
 
-			if next_x > maxlinelen or #lines == 0 then
-				table.insert(lines, "")
-				x = 0
+				local looped = false
+				if x + tx > maxw then
+					local dashi = string.find(word, "-")
+					if dashi and surface.GetTextSize(utf8.sub(word, 0, dashi)) <= maxw - x then
+						-- cut the word at the dash sign if possible
+						table.insert(content, tline .. utf8.sub(word, 0, dashi))
+						tline = ""
+						x = 0
+						word = utf8.sub(word, dashi + 1)
+						tx = surface.GetTextSize(word)
+						looped = true
+					else
+						-- move whole word to new line
+						if _words == 1 then
+							--print( "Line 1 wrapped")
+						else
+							--print( "didn't line 1 wrap")
+							table.insert(content, tline)
+							tline = ""
+							x = 0
+							looped = true
+						end
+					end
+				end
+	
+				tline = tline .. word
+				if looped then
+					content[#content] = content[#content]:Left(-2)
+				end
+				if _words != #words then
+					tline = tline .. " "
+				end
+	
+				x = x + tx + ts
 			end
-
-			lines[#lines] = lines[#lines] .. " " .. word
-			x = x + string.len(word) + 1
+	
+			table.insert(content, tline)
+			tline = ""
+			x = 0
 		end
 
-		return lines
+		for i, v in ipairs(content) do
+			--content[i] = v:Trim()
+		end
+	
+		return content
 	end
 
 	net.Receive("TabPhone_Message", function(len, ply)
@@ -68,12 +98,9 @@ if CLIENT then
 
 		TabMemory.MessageHistory[id] = TabMemory.MessageHistory[id] or {}
 
-		local lines = TabPhone.SplitIntoLines(message)
-
 		table.insert(TabMemory.MessageHistory[id], {
 			yours = false,
-			msg = lines,
-			lines = table.Count(lines)
+			msg = message,
 		})
 
 		if !GetConVar("tabphone_dnd"):GetBool() then
@@ -92,12 +119,9 @@ if CLIENT then
 
 		TabMemory.MessageHistory[id] = TabMemory.MessageHistory[id] or {}
 
-		local lines = TabPhone.SplitIntoLines(message)
-
 		table.insert(TabMemory.MessageHistory[id], {
 			yours = false,
-			msg = lines,
-			lines = table.Count(lines)
+			msg = message,
 		})
 
 		if !GetConVar("tabphone_dnd"):GetBool() then
@@ -109,6 +133,7 @@ if CLIENT then
 	end)
 
 	function TabPhone.SendMessage(ply, message)
+		message = message:Trim()
 		if message == "" then return end
 		if TabPhone_MessageDebounceTime > CurTime() then return end
 
@@ -124,13 +149,10 @@ if CLIENT then
 
 		TabMemory.MessageHistory[id] = TabMemory.MessageHistory[id] or {}
 
-		local lines = TabPhone.SplitIntoLines(message)
-
-		table.insert(TabMemory.MessageHistory[id], {
+		table.insert( TabMemory.MessageHistory[id], {
 			yours = true,
-			msg = lines,
-			lines = table.Count(lines)
-		})
+			msg = message,
+		} )
 
 		if !is_to_npc then
 			net.Start("TabPhone_Message")
@@ -270,6 +292,7 @@ if SERVER then
 		local recipient = net.ReadEntity()
 		local message = net.ReadString()
 
+		message = message:Trim()
 		message = string.sub(message, 1, 200)
 
 		if message == "" then return end
@@ -399,7 +422,7 @@ if SERVER then
 		if ll and lt and (ll == lt) then return true, false end
 	end)
 
-	function TabPhoneSendNPCMessage(ply, from, message)
+	function TabPhone.SendNPCMessage(ply, from, message)
 		net.Start("TabPhone_NPCMessage")
 		net.WriteString(from)
 		net.WriteString(message)

@@ -7,7 +7,7 @@ local myMat = CreateMaterial("TabPhoneRTMat8", "UnlitGeneric", {
 local COL_FG = Color(76, 104, 79)
 local COL_BG = color_black
 
-local sizes = {48, 32, 28, 24, 22, 16}
+local sizes = {48, 32, 28, 24, 16}
 
 for i, v in pairs(sizes) do
     surface.CreateFont("TabPhone" .. v, {
@@ -119,7 +119,6 @@ function SWEP:PreDrawViewModel(vm, wep, ply)
     surface.SetDrawColor(COL_FG)
     surface.SetMaterial(IMAGE_BATTERY)
     surface.DrawTexturedRect(BARRIER_FLIPPHONE - 8 - 64, 8, 64, 32)
-    --draw.SimpleText( "24%", "TabPhone16", BARRIER_FLIPPHONE-8-64+10, 14, COL_FG, TEXT_ALIGN_RIGHT )
     surface.SetDrawColor(COL_FG)
     surface.SetMaterial(SIGNAL_IMAGES[TabMemory.CellSignal or 1])
     surface.DrawTexturedRect(8, 8, 32, 32)
@@ -129,11 +128,8 @@ function SWEP:PreDrawViewModel(vm, wep, ply)
         TabMemory.NextChangeSignal = CurTime() + math.Rand(10, 30)
     end
 
-    --draw.SimpleText( "OTER", "TabPhone16", 8+32+4, 14, COL_FG )
     local TimeString
-    -- 24 hr
     local colon = ":"
-
     if math.floor(UnPredictedCurTime()) % 2 == 0 then
         colon = " "
     end

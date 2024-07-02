@@ -7,6 +7,7 @@ CreateClientConVar("tabphone_24h", "0", true, true)
 CreateClientConVar("tabphone_dnd", "0", true, true)
 CreateClientConVar("tabphone_silent", "0", true, true)
 CreateClientConVar("tabphone_vmpos", "1", true, true)
+CreateClientConVar("tabphone_chatsize", "2", true, true)
 
 hook.Add( "PlayerBindPress", "TabPhone", function(ply, bind, pressed)
     local block = nil
