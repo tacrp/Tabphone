@@ -12,6 +12,7 @@ SWEP.Secondary.ClipSize = -1
 SWEP.Secondary.Ammo = ""
 SWEP.IsTabPhone = true
 AddCSLuaFile()
+TabPhone = TabPhone or {}
 
 local searchdir = "weapons/testphone"
 

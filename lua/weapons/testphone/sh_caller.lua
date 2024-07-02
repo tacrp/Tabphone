@@ -399,7 +399,7 @@ if SERVER then
 		if ll and lt and (ll == lt) then return true, false end
 	end)
 
-	function TabPhone.SendNPCMessage(ply, from, message)
+	function TabPhoneSendNPCMessage(ply, from, message)
 		net.Start("TabPhone_NPCMessage")
 		net.WriteString(from)
 		net.WriteString(message)

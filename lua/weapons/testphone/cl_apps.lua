@@ -149,7 +149,7 @@ TabPhone.Apps["mainmenu"] = {
     end,
 }
 
-local cachedplayers = {}
+cachedplayers = cachedplayers or {}
 local pfpdatafile = "arcrp_pfp.dat"
 
 local function savepfps()
@@ -181,6 +181,13 @@ end
 local function GetMessageHistory(id)
     return TabMemory.MessageHistory[id] or {}
 end
+
+TabPhone.NPCContacts = {
+    ["assassins"] = {
+        name = "???",
+        hide_if_nomsg = true
+    }
+}
 
 TabPhone.Apps["contacts"] = {
     Name = "Contacts",
@@ -389,8 +396,6 @@ TabPhone.Apps["messages"] = {
 }
 
 local temp_message = ""
-local frame
-local tEntry
 TabPhone_MessageDebounceTime = 0
 
 TabPhone.Apps["messages_sender"] = {
@@ -398,31 +403,34 @@ TabPhone.Apps["messages_sender"] = {
     Func_Enter = function()
         temp_message = ""
 
-        if frame then
-            frame:Remove()
+        if SuperTextFrame then
+            SuperTextFrame:Remove()
         end
 
-        frame = vgui.Create("DFrame")
-        frame:SetSize(0, 0)
-        frame:Center()
-        frame:MakePopup()
+        SuperTextFrame = vgui.Create("DFrame")
+        SuperTextFrame:SetSize(0, 0)
+        SuperTextFrame:Center()
+        SuperTextFrame:MakePopup()
+		SuperTextFrame:SetMouseInputEnabled(false)
 
-        function frame:Paint()
+        function SuperTextFrame:Paint()
             return
         end
 
-        tEntry = vgui.Create("DTextEntry", frame)
-        tEntry:Dock(TOP)
-        tEntry:RequestFocus()
-        tEntry:SetUpdateOnType(true)
+        SuperTextEntry = vgui.Create("DTextEntry", SuperTextFrame)
+        SuperTextEntry:Dock(TOP)
+        SuperTextEntry:RequestFocus()
+        SuperTextEntry:SetUpdateOnType(true)
+		SuperTextEntry:SetEnterAllowed(false)
 
-        function tEntry:OnLoseFocus()
-            if frame then
-                frame:Remove()
+        function SuperTextEntry:OnLoseFocus()
+            if SuperTextFrame then
+                SuperTextFrame:Remove()
             end
         end
 
-        function tEntry:OnValueChange(value)
+        function SuperTextEntry:OnValueChange(value)
+			value = value:Trim()
             if string.len(value) > 200 then
                 value = value:Left(200)
                 self:SetValue(value)
@@ -431,7 +439,7 @@ TabPhone.Apps["messages_sender"] = {
             temp_message = value
         end
 
-        function tEntry:Paint()
+        function SuperTextEntry:Paint()
             return
         end
     end,
@@ -446,6 +454,9 @@ TabPhone.Apps["messages_sender"] = {
         end
         TabPhone.EnterApp("messages_viewer")
     end,
+	Func_Leave = function()
+		SuperTextFrame:Remove()
+	end,
     Func_Secondary = function()
         TabPhone.EnterApp("messages_viewer")
     end,
@@ -456,8 +467,9 @@ TabPhone.Apps["messages_sender"] = {
         surface.DrawRect(0, 48, 512, 48 + 4 + 4)
         local ply = cachedplayers[TabMemory.SelectedPlayer]
 
-        if not player then
-            TabPhone.EnterApp("contacts")
+        if !ply then
+            TabPhone.EnterApp("messages")
+			return
         end
 
         local pfp = GetProfilePic(ply.ID)
@@ -528,8 +540,9 @@ TabPhone.Apps["messages_viewer"] = {
         surface.DrawRect(0, 48, 512, 48 + 4 + 4)
         local ply = cachedplayers[TabMemory.SelectedPlayer]
 
-        if not player then
-            TabPhone.EnterApp("contacts")
+        if !ply then
+            TabPhone.EnterApp("messages")
+			return
         end
 
         local pfp = GetProfilePic(ply.ID)
@@ -553,14 +566,26 @@ TabPhone.Apps["messages_viewer"] = {
 
             for _, ts in ipairs(msg.msg) do
                 if v_y > 0 and v_y < h then
-                    local tsn = surface.GetTextSize(ts)
+					surface.SetFont("TabPhone24")
+					local tsn = surface.GetTextSize(ts)
 
                     if msg.yours then
-                        surface.DrawOutlinedRect(w - 12 - tsn, v_y, tsn + 4, 24 + 4 + 4, 2)
-                        draw.SimpleText(ts, "TabPhone24", w - 8 - tsn, v_y, COL_BG)
+                        surface.DrawOutlinedRect(
+							w - tsn - 8 - 8 - 8,-- - 4 - tsn,
+							v_y,
+							tsn + 8 + 8,
+							24 + 4 + 4,
+							2
+						)
+                        draw.SimpleText(ts, "TabPhone24", w - 8 - 8, v_y, COL_BG, TEXT_ALIGN_RIGHT)
                     else
-                        surface.DrawRect(8, v_y, tsn, 24 + 4 + 4)
-                        draw.SimpleText(ts, "TabPhone24", 8, v_y, COL_FG)
+                        surface.DrawRect(
+							8,
+							v_y,
+							tsn,
+							24 + 4 + 4
+						)
+                        draw.SimpleText(ts, "TabPhone24", 8, v_y, COL_FG, TEXT_ALIGN_LEFT)
                     end
                 end
 
