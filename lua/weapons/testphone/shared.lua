@@ -12,7 +12,7 @@ SWEP.Secondary.ClipSize = -1
 SWEP.Secondary.Ammo = ""
 SWEP.IsTabPhone = true
 AddCSLuaFile()
-TabPhone = {}
+
 local searchdir = "weapons/testphone"
 
 local function autoinclude(dir)

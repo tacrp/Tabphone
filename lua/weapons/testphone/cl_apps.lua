@@ -165,26 +165,23 @@ local function loadpfps()
     TabMemory.ProfilePictures = util.JSONToTable(content)
 end
 
-local function GetProfilePic(ply)
-    if not IsValid(ply) then return end
-    local index = "SteamID:" .. tostring(ply:SteamID64())
-    if TabMemory.ProfilePicturesMats[index] then return TabMemory.ProfilePicturesMats[index] end
-    local pfp = TabMemory.ProfilePictures[index]
+local function GetProfilePic(id)
+    if TabMemory.ProfilePicturesMats[id] then return TabMemory.ProfilePicturesMats[id] end
+    local pfp = TabMemory.ProfilePictures[id]
 
     if pfp then
         if file.Exists("arcrp_photos/" .. pfp, "DATA") then
-            TabMemory.ProfilePicturesMats[index] = Material("data/arcrp_photos/" .. pfp)
+            TabMemory.ProfilePicturesMats[id] = Material("data/arcrp_photos/" .. pfp)
         else
             return nil
         end
     end
 
-    return TabMemory.ProfilePicturesMats[index]
+    return TabMemory.ProfilePicturesMats[id]
 end
 
-local function GetMessageHistory(ply)
-    -- if !IsValid(ply) then return {} end
-    return TabMemory.MessageHistory["SteamID:" .. ply:SteamID64()] or {}
+local function GetMessageHistory(id)
+    return TabMemory.MessageHistory[id] or {}
 end
 
 TabPhone.Apps["contacts"] = {
@@ -202,20 +199,26 @@ TabPhone.Apps["contacts"] = {
         if TabMemory.ContactsMode == "profile" then
             local image = cachedgalleryimages[TabMemory.GallerySelected]
             if not image then return end
-            local index = "SteamID:" .. tostring(ply.Entity:SteamID64())
+            local index = ply.ID
             TabMemory.ProfilePictures[index] = image.filename
             TabMemory.ProfilePicturesMats[index] = nil
             TabMemory.ContactsMode = "contact"
             savepfps()
             TabPhone.EnterApp("gallery")
         elseif TabMemory.ContactsMode == "contact" then
-            net.Start("Tabphone_Call_Send")
-            net.WriteString(ply.Entity:SteamID64())
-            net.SendToServer()
-            TabPhone.EnterApp("active_call")
-            LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, TabPhone.GetVolume(), CHAN_STATIC)
+            if not IsValid(ply.Entity) then
+                TabMemory.CallingPlayer = nil
+                TabPhone.EnterApp("active_call")
+                LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, TabPhone.GetVolume(), CHAN_STATIC)
+            else
+                net.Start("Tabphone_Call_Send")
+                net.WriteString(ply.Entity:SteamID64())
+                net.SendToServer()
+                TabPhone.EnterApp("active_call")
+                LocalPlayer():EmitSound("fesiug/tabphone/ringtone.ogg", 100, 100, TabPhone.GetVolume(), CHAN_STATIC)
+            end
         elseif TabMemory.ContactsMode == "message" then
-            local id = "SteamID:" .. ply.Entity:SteamID64()
+            local id = ply.ID
 
             TabMemory.UnreadMessages[id] = false
 
@@ -248,9 +251,21 @@ TabPhone.Apps["contacts"] = {
             local pd = {
                 Entity = v,
                 Name = v:Nick(),
-                Icon = GetProfilePic(v),
-                SteamID64 = v:SteamID64()
+                ID = "SteamID:" .. tostring(v:SteamID64()),
+                Number = v:SteamID64()
             }
+            pd.Icon = GetProfilePic(pd.ID)
+
+            table.insert(cachedplayers, pd)
+        end
+
+        for i, v in pairs(TabPhone.NPCContacts) do
+            local pd = {
+                Name = v.name,
+                ID = i,
+                Number = v.number or "UNKNOWN"
+            }
+            pd.Icon = GetProfilePic(pd.ID)
 
             table.insert(cachedplayers, pd)
         end
@@ -301,13 +316,13 @@ TabPhone.Apps["contacts"] = {
             end
 
             draw.SimpleText(v.Name, "TabPhone32", 8 + 96 + 8, TotalScroll + ((i - 1) * (96 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
-            local textr = v.Entity:SteamID64()
+            local textr = v.Number
 
             if TabMemory.ContactsMode == "message" then
-                local history = GetMessageHistory(v.Entity)
+                local history = GetMessageHistory(v.ID)
                 textr = "Start a conversation!"
 
-                local id = "SteamID:" .. v.Entity:SteamID64()
+                local id = v.ID
 
                 if history[#history] then
                     textr = history[#history].msg[1]
@@ -440,7 +455,7 @@ TabPhone.Apps["messages_sender"] = {
             TabPhone.EnterApp("contacts")
         end
 
-        local pfp = GetProfilePic(ply.Entity)
+        local pfp = GetProfilePic(ply.ID)
 
         if pfp then
             surface.SetMaterial(pfp)
@@ -485,7 +500,7 @@ TabPhone.Apps["messages_viewer"] = {
         local max = -320
         local ply = cachedplayers[TabMemory.SelectedPlayer]
 
-        for _, msg in ipairs(GetMessageHistory(ply.Entity)) do
+        for _, msg in ipairs(GetMessageHistory(ply.ID)) do
             max = max + msg.lines * 32
             max = max + 8
         end
@@ -512,7 +527,7 @@ TabPhone.Apps["messages_viewer"] = {
             TabPhone.EnterApp("contacts")
         end
 
-        local pfp = GetProfilePic(ply.Entity)
+        local pfp = GetProfilePic(ply.ID)
 
         if pfp then
             surface.SetMaterial(pfp)
@@ -523,7 +538,7 @@ TabPhone.Apps["messages_viewer"] = {
         draw.SimpleText(ply.Name, "TabPhone24", 8 + 48 + 8 + 4, 8 + 48 + 4, COL_FG)
         render.SetScissorRect(0, 104, w, h, true)
         local v_y = 512 - 40 - 8 - (24 + 4) - 4 + TabMemory.MessageScroll
-        local history = GetMessageHistory(ply.Entity)
+        local history = GetMessageHistory(ply.ID)
 
         for i = 1, #history do
             local msg = history[#history - i + 1]
@@ -716,7 +731,12 @@ TabPhone.Apps["active_call"] = {
         TabMemory.RightText = "HANG UP"
         surface.SetDrawColor(COL_FG)
         surface.DrawRect(0, 0, 512, 512)
-        local pfp = GetProfilePic(TabMemory.CallingPlayer)
+
+        local pfp
+
+        if TabMemory.CallingPlayer then
+            pfp = GetProfilePic("SteamID:" .. TabMemory.CallingPlayer:SteamID64())
+        end
 
         if pfp then
             surface.SetMaterial(pfp)

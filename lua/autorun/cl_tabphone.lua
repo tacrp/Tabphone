@@ -26,3 +26,12 @@ hook.Add( "PlayerBindPress", "TabPhone", function(ply, bind, pressed)
 
     return block
 end)
+
+TabPhone = TabPhone or {}
+
+TabPhone.NPCContacts = {
+    ["assassins"] = {
+        name = "???",
+        hide_if_nomsg = true
+    }
+}

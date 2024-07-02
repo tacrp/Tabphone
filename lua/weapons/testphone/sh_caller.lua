@@ -11,6 +11,7 @@ if SERVER then
 	util.AddNetworkString("Tabphone_Call_HangUp_Recipient")
 
 	util.AddNetworkString("Tabphone_Message")
+	util.AddNetworkString("Tabphone_NPCMessage")
 end
 
 TP_CALLDECLINE_BUSY = 0
@@ -82,11 +83,44 @@ if CLIENT then
 		TabMemory.UnreadMessages[id] = true
 	end)
 
+	net.Receive("TabPhone_NPCMessage", function(len, ply)
+		local sender = net.ReadString()
+		local message = net.ReadString()
+
+		if !IsValid(sender) then return end
+
+		local id = sender
+
+		TabMemory.MessageHistory[id] = TabMemory.MessageHistory[id] or {}
+
+		local lines = TabPhone.SplitIntoLines(message)
+
+		table.insert(TabMemory.MessageHistory[id], {
+			yours = false,
+			msg = lines,
+			lines = table.Count(lines)
+		})
+
+		if !GetConVar("tabphone_dnd"):GetBool() then
+			TabPhone.PlayNotiftone()
+		end
+
+		TabMemory.UnreadMessages[id] = true
+	end)
+
 	function TabPhone.SendMessage(ply, message)
 		if message == "" then return end
 		if TabPhone_MessageDebounceTime > CurTime() then return end
 
-		local id = "SteamID:" .. ply:SteamID64()
+		local id
+		local is_to_npc = false
+
+		if isstring(ply) then
+			id = ply
+			is_to_npc = true
+		else
+			id = "SteamID:" .. ply:SteamID64()
+		end
 
 		TabMemory.MessageHistory[id] = TabMemory.MessageHistory[id] or {}
 
@@ -98,10 +132,12 @@ if CLIENT then
 			lines = table.Count(lines)
 		})
 
-		net.Start("TabPhone_Message")
-		net.WriteEntity(ply)
-		net.WriteString(message)
-		net.SendToServer()
+		if !is_to_npc then
+			net.Start("TabPhone_Message")
+			net.WriteEntity(ply)
+			net.WriteString(message)
+			net.SendToServer()
+		end
 
 		TabPhone_MessageDebounceTime = CurTime() + 0.5
 	end
