@@ -32,7 +32,7 @@ local SIGNAL_IMAGES = {
 
 TabMemory = TabMemory or {
     ActiveApp = false,
-	LastApp = false,
+    LastApp = false,
     --GallerySelected = 1,
     SelectedSetting = 1,
     Flash = false,
@@ -65,7 +65,10 @@ function TabPhone.EnterApp(name)
     TabMemory.ActiveApp = name
     TabMemory.PageSwitchTime = UnPredictedCurTime()
     local active = TabMemory.ActiveApp
-    TabPhone.Apps[active].Func_Enter(from)
+    local activeapp = TabPhone.Apps[active]
+    if activeapp and activeapp.Func_Enter then
+        TabPhone.Apps[active].Func_Enter(from)
+    end
 end
 
 function TabPhone.Scroll(level, var, total)

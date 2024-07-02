@@ -23,12 +23,81 @@ TP_CALLCONFIRM_SMARTASS = 4
 TP_CALLCONFIRM_ANSWERED = 5
 
 if CLIENT then
+	local maxlinelen = 21
+
+	function TabPhone.SplitIntoLines(msg)
+		local words_pre = string.Split(msg, " ")
+		local words = {}
+
+		for _, word in ipairs(words_pre) do
+			if string.len(word) > maxlinelen then
+				local split = math.ceil(string.len(word) / maxlinelen)
+
+				for i = 0, split - 1 do
+					table.insert(words, string.sub(word, i * maxlinelen + 1, (i + 1) * maxlinelen))
+				end
+			else
+				table.insert(words, word)
+			end
+		end
+		local lines = {}
+		local x = 0
+		for _, word in ipairs(words) do
+			local next_x = x + string.len(word) + 1
+
+			if next_x > maxlinelen or #lines == 0 then
+				table.insert(lines, "")
+				x = 0
+			end
+
+			lines[#lines] = lines[#lines] .. " " .. word
+			x = x + string.len(word) + 1
+		end
+
+		return lines
+	end
+
 	net.Receive("TabPhone_Message", function(len, ply)
 		local sender = net.ReadEntity()
 		local message = net.ReadString()
+
+		if !IsValid(sender) then return end
+
+		local id = "SteamID:" .. sender:SteamID64()
+
+		TabMemory.MessageHistory[id] = TabMemory.MessageHistory[id] or {}
+
+		local lines = TabPhone.SplitIntoLines(message)
+
+		table.insert(TabMemory.MessageHistory[id], {
+			yours = false,
+			msg = lines,
+			lines = table.Count(lines)
+		})
 	end)
 
 	function TabPhone.SendMessage(ply, message)
+		if message == "" then return end
+		if TabPhone_MessageDebounceTime > CurTime() then return end
+
+		local id = "SteamID:" .. ply:SteamID64()
+
+		TabMemory.MessageHistory[id] = TabMemory.MessageHistory[id] or {}
+
+		local lines = TabPhone.SplitIntoLines(message)
+
+		table.insert(TabMemory.MessageHistory[id], {
+			yours = true,
+			msg = lines,
+			lines = table.Count(lines)
+		})
+
+		net.Start("TabPhone_Message")
+		net.WriteEntity(ply)
+		net.WriteString(message)
+		net.SendToServer()
+
+		TabPhone_MessageDebounceTime = CurTime() + 0.5
 	end
 
 	net.Receive("Tabphone_Call_Ring", function(len, ply)
@@ -160,6 +229,8 @@ if SERVER then
 		local message = net.ReadString()
 
 		message = string.sub(message, 1, 200)
+
+		if message == "" then return end
 
 		if !IsValid(recipient) then return end
 		if !recipient:IsPlayer() then return end

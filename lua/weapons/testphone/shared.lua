@@ -68,7 +68,11 @@ function SWEP:PrimaryAttack()
 
 	if CLIENT and IsFirstTimePredicted() then
 		local active = TabMemory.ActiveApp
-		TabPhone.Apps[active].Func_Primary()
+		local activeapp = TabPhone.Apps[active]
+
+		if activeapp and activeapp.Func_Primary then
+			TabPhone.Apps[active].Func_Primary()
+		end
 	end
 end
 
@@ -79,7 +83,11 @@ function SWEP:SecondaryAttack()
 
 	if CLIENT and IsFirstTimePredicted() then
 		local active = TabMemory.ActiveApp
-		TabPhone.Apps[active].Func_Secondary()
+		local activeapp = TabPhone.Apps[active]
+
+		if activeapp and activeapp.Func_Secondary then
+			TabPhone.Apps[active].Func_Secondary()
+		end
 	end
 end
 
@@ -90,7 +98,11 @@ function SWEP:Reload()
 
 	if CLIENT and IsFirstTimePredicted() then
 		local active = TabMemory.ActiveApp
-		TabPhone.Apps[active].Func_Reload()
+		local activeapp = TabPhone.Apps[active]
+
+		if activeapp and activeapp.Func_Reload then
+			TabPhone.Apps[active].Func_Reload()
+		end
 	end
 end
 
@@ -196,58 +208,17 @@ end
 
 TabPhone.RingtonePath = "fesiug/tabphone/ringtones/44khz/"
 
-TabPhone.Notiftones = {
-	"notifs/textring.ogg",
-	"notifs/textring2.ogg",
-	"notifs/textring3.ogg",
-	"notifs/textring4.ogg",
-	"notifs/textring5.ogg",
-	"notifs/Text.ogg",
-	"notifs/sfx_sms.ogg",
-}
+TabPhone.Notiftones = {"notifs/textring.ogg", "notifs/textring2.ogg", "notifs/textring3.ogg", "notifs/textring4.ogg", "notifs/textring5.ogg", "notifs/Text.ogg", "notifs/sfx_sms.ogg",}
 
-TabPhone.Ringtones = {
-	"Standard Ring.ogg",
-	"arab.ogg",
-	"butterfly.ogg",
-	"americafyeah.ogg",
-	"amongla.ogg",
-	"angrybirds.ogg",
-	"duvet.ogg",
-	"edgy.ogg",
-	"gutsberserk.ogg",
-	"russian.ogg",
-	"tailsofvalor.ogg",
-	"themanwhosoldtheworld.ogg",
-	"1.6.ogg",
-	"valve.ogg",
-	"clockring.ogg",
+TabPhone.Ringtones = {"Standard Ring.ogg", "arab.ogg", "butterfly.ogg", "americafyeah.ogg", "amongla.ogg", "angrybirds.ogg", "duvet.ogg", "edgy.ogg", "gutsberserk.ogg", "russian.ogg", "tailsofvalor.ogg", "themanwhosoldtheworld.ogg", "1.6.ogg", "valve.ogg", "clockring.ogg", "callring3_franklin.ogg", "callring6_michael.ogg", "callring8_trevor.ogg", "109.ogg", "Cool Room.ogg", "Countryside.ogg", "Credit Check.ogg", "Dragon Brain.ogg", "Drive.ogg", "Fox.ogg", "Funk in Time.ogg", "Hooker.ogg", "Katja's Waltz.ogg", "Malfunction.ogg", "Pager.ogg",}
 
-	-- GTA 5
-	"callring3_franklin.ogg",
-	"callring6_michael.ogg",
-	"callring8_trevor.ogg",
-	--"callring.ogg",
-	--"callring2.ogg",
-	--"callring4.ogg",
-	--"callring5.ogg",
-	--"callring7.ogg",
-	
-	-- GTA 4
-	"109.ogg",
-	"Cool Room.ogg",
-	"Countryside.ogg",
-	"Credit Check.ogg",
-	"Dragon Brain.ogg",
-	"Drive.ogg",
-	"Fox.ogg",
-	"Funk in Time.ogg",
-	"Hooker.ogg",
-	"Katja's Waltz.ogg",
-	"Malfunction.ogg",
-	"Pager.ogg",
-}
-
+-- GTA 5
+--"callring.ogg",
+--"callring2.ogg",
+--"callring4.ogg",
+--"callring5.ogg",
+--"callring7.ogg",
+-- GTA 4
 function TabPhone.GetRingtonePath()
 	return TabPhone.RingtonePath .. TabPhone.Ringtones[GetConVar("tabphone_ringtone"):GetInt()]
 end
@@ -268,21 +239,13 @@ function TabPhone.EndRingtone()
 	LocalPlayer():StopSound(TabPhone.GetRingtonePath())
 end
 
-local vmposes = {
-	vector_origin,
-	Vector( -1.5, 0, 0 ),
-	Vector( -0.9, -1.5, 0.4 ),
-	Vector( -1.5, -1.5, 0.4 ),
-}
+local vmposes = {vector_origin, Vector(-1.5, 0, 0), Vector(-0.9, -1.5, 0.4), Vector(-1.5, -1.5, 0.4),}
 
-function SWEP:GetViewModelPosition( pos, ang )
-
+function SWEP:GetViewModelPosition(pos, ang)
 	local mover = vmposes[GetConVar("tabphone_vmpos"):GetInt()]
-
-	pos:Add( mover.x * ang:Right() )
-	pos:Add( mover.y * ang:Forward() )
-	pos:Add( mover.z * ang:Up() )
-
+	pos:Add(mover.x * ang:Right())
+	pos:Add(mover.y * ang:Forward())
+	pos:Add(mover.z * ang:Up())
 	-- ang:RotateAroundAxis( ang:Right(), 0 )
 	-- ang:RotateAroundAxis( ang:Forward(), 0 )
 	-- ang:RotateAroundAxis( ang:Up(), 0 )
