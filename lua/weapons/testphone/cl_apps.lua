@@ -54,15 +54,13 @@ end
 local mat_profile = Material("fesiug/tabphone/profile.png")
 TabPhone.Apps = {}
 
-local has_unread = false
-
 TabPhone.Apps["mainmenu"] = {
     Name = "Main Menu",
     Hidden = true,
     Icon = Material("fesiug/tabphone/contact.png"),
     SortOrder = 0,
     Func_Enter = function()
-        has_unread = table.HasValue(TabMemory.UnreadMessages, true)
+        TabMemory.Has_Unread = table.HasValue(TabMemory.UnreadMessages, true)
     end,
     Func_Leave = function() end,
     Func_Primary = function()
@@ -376,7 +374,7 @@ local message_icon = Material("fesiug/tabphone/message.png")
 TabPhone.Apps["messages"] = {
     Name = "Messages",
     Func_GetIcon = function()
-        if has_unread and (CurTime()) % 1 > 0.5 then
+        if TabMemory.Has_Unread and (CurTime()) % 1 > 0.5 then
             return unread_icon
         else
             return message_icon

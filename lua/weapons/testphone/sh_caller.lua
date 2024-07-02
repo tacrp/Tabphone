@@ -81,13 +81,12 @@ if CLIENT then
 		end
 
 		TabMemory.UnreadMessages[id] = true
+		TabMemory.Has_Unread = true
 	end)
 
 	net.Receive("TabPhone_NPCMessage", function(len, ply)
 		local sender = net.ReadString()
 		local message = net.ReadString()
-
-		if !IsValid(sender) then return end
 
 		local id = sender
 
@@ -106,6 +105,7 @@ if CLIENT then
 		end
 
 		TabMemory.UnreadMessages[id] = true
+		TabMemory.Has_Unread = true
 	end)
 
 	function TabPhone.SendMessage(ply, message)
@@ -398,4 +398,11 @@ if SERVER then
 		local ll, lt = TABPHONE_LINKER[talker], TABPHONE_LINKER[listener]
 		if ll and lt and (ll == lt) then return true, false end
 	end)
+
+	function TabPhone.SendNPCMessage(ply, from, message)
+		net.Start("TabPhone_NPCMessage")
+		net.WriteString(from)
+		net.WriteString(message)
+		net.Send(ply)
+	end
 end

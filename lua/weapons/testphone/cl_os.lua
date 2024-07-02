@@ -51,7 +51,8 @@ TabMemory = TabMemory or {
     MessageHistory = {},
     UnreadMessages = {},
     ContactsMode = "contacts",
-    MessageScroll = 0
+    MessageScroll = 0,
+    Has_Unread = false,
 }
 
 function TabPhone.EnterApp(name)
