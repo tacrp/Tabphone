@@ -432,7 +432,8 @@ TabPhone.Apps["messages_sender"] = {
         end
 
         function SuperTextEntry:OnValueChange(value)
-            if string.len(value) > 200 then
+			value = value:gsub("%s+", " ")
+			if string.len(value) > 200 then
                 value = value:Left(200)
                 self:SetValue(value)
             end
@@ -518,7 +519,7 @@ TabPhone.Apps["messages_viewer"] = {
         TabMemory.MessageScroll = 0
     end,
     Func_Scroll = function(level)
-		local TEXTTALL = ChatSizes[GetConVar("tabphone_chatsize"):GetInt()-4]
+		local TEXTTALL = ChatSizes[GetConVar("tabphone_chatsize"):GetInt()]
 
         local min = 0
         local max = -320 - 40

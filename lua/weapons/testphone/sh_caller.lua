@@ -133,6 +133,7 @@ if CLIENT then
 	end)
 
 	function TabPhone.SendMessage(ply, message)
+		message = message:gsub("%s+", " ")
 		message = message:Trim()
 		if message == "" then return end
 		if TabPhone_MessageDebounceTime > CurTime() then return end
@@ -292,6 +293,7 @@ if SERVER then
 		local recipient = net.ReadEntity()
 		local message = net.ReadString()
 
+		message = message:gsub("%s+", " ")
 		message = message:Trim()
 		message = string.sub(message, 1, 200)
 
