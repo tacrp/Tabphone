@@ -295,7 +295,7 @@ if SERVER then
 
 		message = message:gsub("%s+", " ")
 		message = message:Trim()
-		message = string.sub(message, 1, 200)
+		message = string.sub(message, 1, 140)
 
 		if message == "" then return end
 

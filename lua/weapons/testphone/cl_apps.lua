@@ -433,9 +433,11 @@ TabPhone.Apps["messages_sender"] = {
 
         function SuperTextEntry:OnValueChange(value)
 			value = value:gsub("%s+", " ")
-			if string.len(value) > 200 then
-                value = value:Left(200)
+			if string.len(value) > 140 then
+                value = value:Left(140)
+                self:SetText(value)
                 self:SetValue(value)
+				self:SetCaretPos(1+140)
             end
 
             temp_message = value
@@ -503,11 +505,20 @@ TabPhone.Apps["messages_sender"] = {
             v_y = v_y + 32
         end
 
-        if (CurTime() * 2) % 1 > 0.5 and string.len(temp_message) < 200 then
+        if (CurTime() * 2) % 1 > 0.5 and #temp_message < 140 then
             surface.SetDrawColor(COL_BG)
             surface.DrawRect(v_x, v_y - 32, 24, 32)
             -- draw.SimpleText("|", "TabPhone24", v_x, v_y - 32, COL_BG, TEXT_ALIGN_LEFT)
         end
+
+		local overboard = false
+		if #temp_message >= 140 then
+			overboard = true
+			surface.SetFont("TabPhone24")
+			local tsn = surface.GetTextSize( #temp_message .. "/" .. 140 )
+			surface.DrawRect( w - 16 - tsn - 4, h - 40 - 16 - 24 - 2, tsn + 8, 24 + 6 )
+		end
+		draw.SimpleText(#temp_message .. "/" .. 140, "TabPhone24", w - 16, h - 40 - 16 - 24, overboard and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
     end
 }
 
