@@ -192,7 +192,7 @@ TabPhone.NPCContacts = {
 TabPhone.Apps["contacts"] = {
     Name = "Contacts",
     Icon = Material("fesiug/tabphone/contact.png"),
-    SortOrder = -1009,
+    SortOrder = -119,
     Func_Enter = function()
         loadpfps()
     end,
@@ -390,7 +390,7 @@ TabPhone.Apps["messages"] = {
         end
     end,
     Icon = message_icon,
-    SortOrder = -1008,
+    SortOrder = -118,
     Func_Enter = function()
         TabMemory.ContactsMode = "message"
         TabPhone.EnterApp("contacts")
@@ -630,7 +630,7 @@ TabPhone.Apps["messages_viewer"] = {
 TabPhone.Apps["jobs"] = {
     Name = "Jobs",
     Icon = Material("fesiug/tabphone/job.png"),
-    SortOrder = -1007,
+    SortOrder = -117,
     Func_Enter = function() end,
     Func_Primary = function()
         TabPhone.PlayNotiftone()
@@ -649,7 +649,7 @@ TabPhone.Apps["jobs"] = {
 TabPhone.Apps["calendar"] = {
     Name = "Calendar",
     Icon = Material("fesiug/tabphone/calendar.png"),
-    SortOrder = -1006,
+    SortOrder = -91,
     Hidden = true,
     Func_Enter = function() end,
     Func_Primary = function() end,
@@ -663,7 +663,7 @@ TabPhone.Apps["calendar"] = {
 TabPhone.Apps["dialer"] = {
     Name = "Dialer",
     Icon = Material("fesiug/tabphone/phone.png"),
-    SortOrder = -1006,
+    SortOrder = -116,
     Func_Enter = function()
         TabMemory.YouDial = ""
     end,
@@ -712,7 +712,7 @@ local itemstobuy = {
 TabPhone.Apps["shopping"] = {
     Name = "Shopping",
     Icon = Material("fesiug/tabphone/shopper.png"),
-    SortOrder = -1006,
+    SortOrder = -96,
     Func_Enter = function() end,
     Func_Primary = function() end,
     Func_Secondary = function()
@@ -1008,7 +1008,7 @@ local radio_filled = Material("fesiug/tabphone/radio_filled.png")
 TabPhone.Apps["settings"] = {
     Name = "Settings",
     Icon = Material("fesiug/tabphone/settings.png"),
-    SortOrder = -1005,
+    SortOrder = -50,
     Func_Enter = function() end,
     Func_Primary = function()
         changeOption(1)
@@ -1073,7 +1073,7 @@ local noflashmat = Material("fesiug/tabphone/noflash.png")
 TabPhone.Apps["camera"] = {
     Name = "Camera",
     Icon = Material("fesiug/tabphone/camera.png"),
-    SortOrder = -1020,
+    SortOrder = -89,
     Func_Enter = function()
         TabMemory.CameraZoom = 1
     end,
@@ -1291,7 +1291,7 @@ end
 TabPhone.Apps["gallery"] = {
     Name = "Gallery",
     Icon = Material("fesiug/tabphone/gallery.png"),
-    SortOrder = -1019,
+    SortOrder = -88,
     Func_Enter = function()
         if not TabMemory.GallerySelected then
             TabMemory.GallerySelected = 1
@@ -1524,7 +1524,7 @@ local games_apps = {
 TabPhone.Apps["games"] = {
     Name = "Games",
     Icon = Material("fesiug/tabphone/games.png"),
-    SortOrder = -1008,
+    SortOrder = -79,
     Func_Enter = function()
     end,
     Func_Leave = function() end,
