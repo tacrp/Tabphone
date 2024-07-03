@@ -1516,3 +1516,109 @@ TabPhone.Apps["gallery_deleter"] = {
         surface.DrawTexturedRect(w / 2 - 300 / 2, 172, 300, 300)
     end,
 }
+
+local games_apps = {
+    "game_flappy"
+}
+
+TabPhone.Apps["games"] = {
+    Name = "Games",
+    Icon = Material("fesiug/tabphone/games.png"),
+    SortOrder = -1008,
+    Func_Enter = function()
+    end,
+    Func_Leave = function() end,
+    Func_Primary = function()
+        local Sortedapps = games_apps
+        TabPhone.EnterApp(Sortedapps[TabMemory.SelectedGame])
+    end,
+    Func_Secondary = function()
+        TabPhone.EnterApp("mainmenu")
+    end,
+    Func_Scroll = function(level)
+        TabPhone.Scroll(level, "SelectedGame", #games_apps)
+    end,
+    Func_Reload = function() end,
+    Func_Draw = function(w, h)
+        local Sortedapps = games_apps
+        -- Scroll math
+        local longestscroll = 0
+
+        for i, prev in ipairs(Sortedapps) do
+            local sel = i == TabMemory.SelectedGame
+            local Sy = ((i - 1) * (48 + 8)) + 48 + 8
+
+            if Sy > (512 - 48 - 40) then
+                longestscroll = math.max(-((512 - 48 - 40 - 8) - Sy), longestscroll)
+            end
+
+            if sel then
+                if (Sy + TabMemory.TotalGameScroll) > (512 - 48 - 40) then
+                    TabMemory.TotalGameScroll = (512 - 48 - 40 - 8) - Sy
+                elseif (Sy + TabMemory.TotalGameScroll) <= (48 + 8) then
+                    TabMemory.TotalGameScroll = (48 + 8) - Sy
+                end
+            end
+        end
+
+        local TotalScroll = TabMemory.TotalGameScroll
+
+        -- App logic
+        for i, prev in ipairs(Sortedapps) do
+            local v = TabPhone.Apps[prev]
+            local sel = i == TabMemory.SelectedGame
+            surface.SetDrawColor(COL_BG)
+
+            if sel then
+                surface.DrawRect(8, TotalScroll + ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8 - 8, 52)
+            else
+                surface.DrawOutlinedRect(8, TotalScroll + ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8 - 8, 52, 4)
+            end
+
+            draw.SimpleText(v.Name, "TabPhone32", 8 + 8 + 8 + 8 + 8 + 32, TotalScroll + ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
+            surface.SetDrawColor(sel and COL_FG or COL_BG)
+            local icon = v.Icon
+
+            if v.Func_GetIcon then
+                icon = v.Func_GetIcon()
+            end
+
+            if icon then
+                surface.SetMaterial(icon)
+            end
+            surface.DrawTexturedRect(8 + 8 + 4 + 4, TotalScroll + ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
+        end
+
+        -- Scroll logic
+        local fulllength = 512 - 48 - 40 - 8 - 8
+        local annoyingmath = (512 - 48 - 40 - 8) / ((512 - 48 - 40 - 8) - longestscroll)
+        local length = fulllength / annoyingmath
+        local s_per
+
+        if longestscroll <= 0 then
+            s_per = 0
+        else
+            s_per = (-TotalScroll) / longestscroll
+        end
+
+        local endpos = ((48 + 8) + (512 - 48 - 40 - 8 - 4) * s_per) - length * s_per
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(BARRIER_FLIPPHONE - 12, endpos, 6, length)
+    end,
+}
+
+TabPhone.Apps["game_flappy"] = {
+    Name = "Floopy Borb",
+    Icon = Material("fesiug/tabphone/pidge.png"),
+    Hidden = true,
+    Func_Enter = function()
+    end,
+    Func_Reload = function() end,
+    Func_Primary = function()
+    end,
+    Func_Secondary = function()
+        TabPhone.EnterApp("games")
+    end,
+    Func_Draw = function(w, h)
+    end,
+}

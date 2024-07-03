@@ -46,6 +46,7 @@ TabMemory = TabMemory or {
     CellSignal = 3,
     NextChangeSignal = 0,
     SelectedImageOption = 1,
+    SelectedGame = 1,
     ProfilePictures = {},
     ProfilePicturesMats = {},
     MessageHistory = {},
@@ -53,6 +54,7 @@ TabMemory = TabMemory or {
     ContactsMode = "contacts",
     MessageScroll = 0,
     Has_Unread = false,
+    TotalGameScroll = 0,
 }
 
 function TabPhone.EnterApp(name)
