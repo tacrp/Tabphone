@@ -211,7 +211,7 @@ TabPhone.RingtonePath = "fesiug/tabphone/ringtones/44khz/"
 
 TabPhone.Notiftones = {"notifs/textring.ogg", "notifs/textring2.ogg", "notifs/textring3.ogg", "notifs/textring4.ogg", "notifs/textring5.ogg", "notifs/Text.ogg", "notifs/sfx_sms.ogg",}
 
-TabPhone.Ringtones = {"Standard Ring.ogg", "arab.ogg", "butterfly.ogg", "americafyeah.ogg", "amongla.ogg", "angrybirds.ogg", "duvet.ogg", "edgy.ogg", "gutsberserk.ogg", "russian.ogg", "tailsofvalor.ogg", "themanwhosoldtheworld.ogg", "1.6.ogg", "valve.ogg", "clockring.ogg", "callring3_franklin.ogg", "callring6_michael.ogg", "callring8_trevor.ogg", "109.ogg", "Cool Room.ogg", "Countryside.ogg", "Credit Check.ogg", "Dragon Brain.ogg", "Drive.ogg", "Fox.ogg", "Funk in Time.ogg", "Hooker.ogg", "Katja's Waltz.ogg", "Malfunction.ogg", "Pager.ogg",}
+TabPhone.Ringtones = {"Standard Ring.ogg", "arab.ogg", "butterfly.ogg", "americafyeah.ogg", "amongla.ogg", "angrybirds.ogg", "duvet.ogg", "edgy.ogg", "gutsberserk.ogg", "russian.ogg", "tailsofvalor.ogg", "themanwhosoldtheworld.ogg", "1.6.ogg", "valve.ogg", "clockring.ogg", "callring3_franklin.ogg", "callring6_michael.ogg", "callring8_trevor.ogg", "109.ogg", "Cool Room.ogg", "Countryside.ogg", "Credit Check.ogg", "Dragon Brain.ogg", "Drive.ogg", "Fox.ogg", "Funk in Time.ogg", "Hooker.ogg", "Katja's Waltz.ogg", "Malfunction.ogg", "Pager.ogg", "cowboy.ogg", "johncena.ogg", "persona.ogg"}
 
 -- GTA 5
 --"callring.ogg",

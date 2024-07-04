@@ -696,45 +696,46 @@ TabPhone.Apps["dialer"] = {
     end,
 }
 
-local itemstobuy = {
-    {
-        ["Name"] = "Washing Machine",
-    },
-    {
-        ["Name"] = "Blood Cleaner",
-    },
-    {
-        ["Name"] = "Automatic Weapons",
-    },
-    {
-        ["Name"] = "Body Bags",
-    },
-}
+local shop_categories = {}
 
 TabPhone.Apps["shopping"] = {
     Name = "Shopping",
     Icon = Material("fesiug/tabphone/shopper.png"),
     SortOrder = -96,
-    Func_Enter = function() end,
+    Func_Enter = function()
+        shop_categories = {}
+
+        for i, k in pairs(DarkRP.getCategories()) do
+            if i == "jobs" then continue end
+            for _, cat in pairs(k) do
+                if table.Count(cat.members) == 0 then continue end
+
+                table.insert(shop_categories, {
+                    type = i,
+                    name = cat.name,
+                })
+            end
+        end
+    end,
     Func_Primary = function() end,
     Func_Secondary = function()
         TabPhone.EnterApp("mainmenu")
     end,
     Func_Reload = function() end,
     Func_Scroll = function(level)
-        TabPhone.Scroll(level, "Shopping_Selected", #itemstobuy)
+        TabPhone.Scroll(level, "Shopping_Selected", #shop_categories)
     end,
     Func_Draw = function(w, h)
         local sw, sh = 16, 48 + 16
 
-        for i, v in ipairs(itemstobuy) do
+        for i, v in ipairs(shop_categories) do
             local sel = (TabMemory.Shopping_Selected or 1) == i
-            draw.SimpleText(v.Name, "TabPhone24", sw, sh, COL_BG)
+            draw.SimpleText(v.name, "TabPhone24", sw, sh, COL_BG)
 
             if sel then
-                draw.SimpleText(v.Name, "TabPhone24", sw + 2, sh, COL_BG)
+                draw.SimpleText(v.name, "TabPhone24", sw + 2, sh, COL_BG)
                 surface.SetDrawColor(COL_BG)
-                surface.DrawRect(sw - 4, sh + 24 + 1, surface.GetTextSize(v.Name) + 8 + 2, 3)
+                surface.DrawRect(sw - 4, sh + 24 + 1, surface.GetTextSize(v.name) + 8 + 2, 3)
             end
 
             sh = sh + 4 + 24
@@ -1566,6 +1567,7 @@ TabPhone.Apps["games"] = {
         -- App logic
         for i, prev in ipairs(Sortedapps) do
             local v = TabPhone.Apps[prev]
+            if not v then continue end
             local sel = i == TabMemory.SelectedGame
             surface.SetDrawColor(COL_BG)
 
@@ -1609,9 +1611,11 @@ TabPhone.Apps["games"] = {
 }
 
 local floopy_bgm_path = "arctic/bgm_1.ogg"
+local floopy_bgm_duration = 97 -- holy shit they STILL haven't fixed this
 local floopy_bgm = nil
 local next_floopy_bgm = 0
 local floopy_score = 0
+local floopy_hiscore = false
 local floopy_pipe = nil
 local floopy_x = 0
 local floopy_y = 256
@@ -1669,6 +1673,7 @@ TabPhone.Apps["game_flappy"] = {
         floopy_dy = 0
         floopy_score = 0
         floopy_pipe = nil
+        floopy_hiscore = false
         cutscene_progress = 0
     end,
     Func_Leave = function()
@@ -1692,6 +1697,7 @@ TabPhone.Apps["game_flappy"] = {
             floopy_dy = 0
             floopy_score = 0
             floopy_pipe = nil
+            floopy_hiscore = false
         end
     end,
     Func_Secondary = function()
@@ -1707,7 +1713,7 @@ TabPhone.Apps["game_flappy"] = {
 
             floopy_bgm = CreateSound(LocalPlayer(), floopy_bgm_path)
             floopy_bgm:Play()
-            next_floopy_bgm = CurTime() + SoundDuration(floopy_bgm_path) - 1
+            next_floopy_bgm = CurTime() + floopy_bgm_duration
         end
 
         if floopy_state == "cutscene" then
@@ -1748,6 +1754,11 @@ TabPhone.Apps["game_flappy"] = {
                 -- Check collision
                 if checkCollision(floopy_x, floopy_y, floopy_pipe.x, floopy_pipe.y, floopy_pipe.gap) or floopy_y <= 0 then
                     floopy_state = "loss"
+
+                    if (TabMemory.HighScores["floopy"] or 0) < floopy_score then
+                        TabMemory.HighScores["floopy"] = floopy_score
+                        floopy_hiscore = true
+                    end
                 end
 
                 -- Update score
@@ -1764,6 +1775,10 @@ TabPhone.Apps["game_flappy"] = {
                     draw.SimpleText("Press Left to Start", "TabPhone24", w / 2, 140, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
                 end
 
+                if (TabMemory.HighScores["floopy"] or 0) > 0 then
+                    draw.SimpleText("TOP SCORE: " .. TabMemory.HighScores["floopy"], "TabPhone24", w / 2, 180, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                end
+
                 TabMemory.LeftText = "START"
                 TabMemory.RightText = "QUIT"
             elseif floopy_state == "loss" then
@@ -1775,6 +1790,11 @@ TabPhone.Apps["game_flappy"] = {
                 end
 
                 drawTextWithBackground("Score: " .. floopy_score, "TabPhone24", w / 2, 260, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+                if floopy_hiscore then
+                    drawTextWithBackground("NEW HIGH SCORE!!!", "TabPhone24", w / 2, 290, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+                end
 
                 TabMemory.LeftText = "RESTART"
                 TabMemory.RightText = "QUIT"
@@ -1936,6 +1956,8 @@ TabPhone.Apps["game_snake"] = {
             if math.sin(CurTime() * 6) > 0 then
                 draw.SimpleText("Press Left to Start", "TabPhone24", w / 2, 140, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             end
+
+            draw.SimpleText("Press R to quit game", "TabPhone24", w / 2, 450, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
             TabMemory.LeftText = "START"
         elseif snake_state == "game" then
