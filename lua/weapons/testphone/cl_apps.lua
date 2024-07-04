@@ -128,6 +128,7 @@ TabPhone.Apps["mainmenu"] = {
             if icon then
                 surface.SetMaterial(icon)
             end
+
             surface.DrawTexturedRect(8 + 8 + 4 + 4, TotalScroll + ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
         end
 
@@ -201,6 +202,7 @@ TabPhone.Apps["contacts"] = {
     end,
     Func_Primary = function()
         local ply = cachedplayers[TabMemory.SelectedPlayer]
+
         if TabMemory.ContactsMode == "profile" then
             local image = cachedgalleryimages[TabMemory.GallerySelected]
             if not image then return end
@@ -226,9 +228,7 @@ TabPhone.Apps["contacts"] = {
             end
         elseif TabMemory.ContactsMode == "message" then
             local id = ply.ID
-
             TabMemory.UnreadMessages[id] = false
-
             TabPhone.EnterApp("messages_viewer")
         end
     end,
@@ -261,8 +261,8 @@ TabPhone.Apps["contacts"] = {
                 ID = "SteamID:" .. tostring(v:SteamID64()),
                 Number = v:SteamID64()
             }
-            pd.Icon = GetProfilePic(pd.ID)
 
+            pd.Icon = GetProfilePic(pd.ID)
             table.insert(cachedplayers, pd)
         end
 
@@ -272,8 +272,8 @@ TabPhone.Apps["contacts"] = {
                 ID = i,
                 Number = v.number or "UNKNOWN"
             }
-            pd.Icon = GetProfilePic(pd.ID)
 
+            pd.Icon = GetProfilePic(pd.ID)
             table.insert(cachedplayers, pd)
         end
 
@@ -330,14 +330,13 @@ TabPhone.Apps["contacts"] = {
             if TabMemory.ContactsMode == "message" then
                 local history = GetMessageHistory(v.ID)
                 textr = "Start a conversation!"
-
                 local id = v.ID
 
                 if history[#history] then
                     textr = history[#history].msg
                 end
 
-                if TabMemory.UnreadMessages[id] and (CurTime()) % 1 > 0.5 then
+                if TabMemory.UnreadMessages[id] and CurTime() % 1 > 0.5 then
                     textr = "NEW MESSAGE!"
                 end
 
@@ -383,7 +382,7 @@ local message_icon = Material("fesiug/tabphone/message.png")
 TabPhone.Apps["messages"] = {
     Name = "Messages",
     Func_GetIcon = function()
-        if TabMemory.Has_Unread and (CurTime()) % 1 > 0.5 then
+        if TabMemory.Has_Unread and CurTime() % 1 > 0.5 then
             return unread_icon
         else
             return message_icon
@@ -413,7 +412,7 @@ TabPhone.Apps["messages_sender"] = {
         SuperTextFrame:SetSize(0, 0)
         SuperTextFrame:Center()
         SuperTextFrame:MakePopup()
-		SuperTextFrame:SetMouseInputEnabled(false)
+        SuperTextFrame:SetMouseInputEnabled(false)
 
         function SuperTextFrame:Paint()
             return
@@ -423,7 +422,7 @@ TabPhone.Apps["messages_sender"] = {
         SuperTextEntry:Dock(TOP)
         SuperTextEntry:RequestFocus()
         SuperTextEntry:SetUpdateOnType(true)
-		SuperTextEntry:SetEnterAllowed(false)
+        SuperTextEntry:SetEnterAllowed(false)
 
         function SuperTextEntry:OnLoseFocus()
             if SuperTextFrame then
@@ -432,12 +431,13 @@ TabPhone.Apps["messages_sender"] = {
         end
 
         function SuperTextEntry:OnValueChange(value)
-			value = value:gsub("%s+", " ")
-			if string.len(value) > 140 then
+            value = value:gsub("%s+", " ")
+
+            if string.len(value) > 140 then
                 value = value:Left(140)
                 self:SetText(value)
                 self:SetValue(value)
-				self:SetCaretPos(1+140)
+                self:SetCaretPos(1 + 140)
             end
 
             temp_message = value
@@ -456,14 +456,15 @@ TabPhone.Apps["messages_sender"] = {
         else
             TabPhone.SendMessage(ply.ID, temp_message)
         end
+
         TabPhone.EnterApp("messages_viewer")
     end,
-	Func_Leave = function()
-		SuperTextFrame:Remove()
-	end,
-	Func_Holster = function()
+    Func_Leave = function()
+        SuperTextFrame:Remove()
+    end,
+    Func_Holster = function()
         TabPhone.EnterApp("messages_viewer")
-	end,
+    end,
     Func_Secondary = function()
         TabPhone.EnterApp("messages_viewer")
     end,
@@ -474,9 +475,10 @@ TabPhone.Apps["messages_sender"] = {
         surface.DrawRect(0, 48, 512, 48 + 4 + 4)
         local ply = cachedplayers[TabMemory.SelectedPlayer]
 
-        if !ply then
+        if not ply then
             TabPhone.EnterApp("messages")
-			return
+
+            return
         end
 
         local pfp = GetProfilePic(ply.ID)
@@ -488,18 +490,18 @@ TabPhone.Apps["messages_sender"] = {
         end
 
         draw.SimpleText("To: " .. ply.Name, "TabPhone24", 8 + 48 + 8 + 4, 8 + 48 + 4, COL_FG)
-        local message_lines = TabPhone.SIL(temp_message, 404-16-16, "TabPhone24")
+        local message_lines = TabPhone.SIL(temp_message, 404 - 16 - 16, "TabPhone24")
         surface.SetFont("TabPhone24")
         surface.SetDrawColor(COL_BG)
         local v_y = 120
         local v_x = 16
 
         for _, ts in ipairs(message_lines) do
-			--if (_ == 1 and ts == "") then v_y = v_y + 32 break end
+            --if (_ == 1 and ts == "") then v_y = v_y + 32 break end
             if v_y > 0 and v_y < h then
                 local tsn = surface.GetTextSize(ts)
                 draw.SimpleText(ts, "TabPhone24", 16, v_y, COL_BG)
-                v_x = 16+tsn
+                v_x = 16 + tsn
             end
 
             v_y = v_y + 32
@@ -511,14 +513,16 @@ TabPhone.Apps["messages_sender"] = {
             -- draw.SimpleText("|", "TabPhone24", v_x, v_y - 32, COL_BG, TEXT_ALIGN_LEFT)
         end
 
-		local overboard = false
-		if #temp_message >= 140 then
-			overboard = true
-			surface.SetFont("TabPhone24")
-			local tsn = surface.GetTextSize( #temp_message .. "/" .. 140 )
-			surface.DrawRect( w - 16 - tsn - 4, h - 40 - 16 - 24 - 2, tsn + 8, 24 + 6 )
-		end
-		draw.SimpleText(#temp_message .. "/" .. 140, "TabPhone24", w - 16, h - 40 - 16 - 24, overboard and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
+        local overboard = false
+
+        if #temp_message >= 140 then
+            overboard = true
+            surface.SetFont("TabPhone24")
+            local tsn = surface.GetTextSize(#temp_message .. "/" .. 140)
+            surface.DrawRect(w - 16 - tsn - 4, h - 40 - 16 - 24 - 2, tsn + 8, 24 + 6)
+        end
+
+        draw.SimpleText(#temp_message .. "/" .. 140, "TabPhone24", w - 16, h - 40 - 16 - 24, overboard and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
     end
 }
 
@@ -530,20 +534,19 @@ TabPhone.Apps["messages_viewer"] = {
         TabMemory.MessageScroll = 0
     end,
     Func_Scroll = function(level)
-		local TEXTTALL = ChatSizes[GetConVar("tabphone_chatsize"):GetInt()]
-
+        local TEXTTALL = ChatSizes[GetConVar("tabphone_chatsize"):GetInt()]
         local min = 0
         local max = -320 - 40
         local ply = cachedplayers[TabMemory.SelectedPlayer]
 
         for _, MsgData in ipairs(GetMessageHistory(ply.ID)) do
-			local msgsplit = TabPhone.SIL( MsgData.msg, 404-16-16, "TabPhone"..TEXTTALL )
-            max = max + #msgsplit * (TEXTTALL+8)
+            local msgsplit = TabPhone.SIL(MsgData.msg, 404 - 16 - 16, "TabPhone" .. TEXTTALL)
+            max = max + #msgsplit * (TEXTTALL + 8)
             max = max + 8
         end
 
         max = math.max(max, 0)
-        TabMemory.MessageScroll = TabMemory.MessageScroll - (level * (TEXTTALL+8))
+        TabMemory.MessageScroll = TabMemory.MessageScroll - (level * (TEXTTALL + 8))
         TabMemory.MessageScroll = math.Clamp(TabMemory.MessageScroll, min, max)
     end,
     Func_Primary = function()
@@ -552,19 +555,18 @@ TabPhone.Apps["messages_viewer"] = {
     Func_Secondary = function()
         TabPhone.EnterApp("messages")
     end,
-    Func_Reload = function()
-    end,
+    Func_Reload = function() end,
     Func_Draw = function(w, h)
-		local TEXTTALL = ChatSizes[GetConVar("tabphone_chatsize"):GetInt()]
-
+        local TEXTTALL = ChatSizes[GetConVar("tabphone_chatsize"):GetInt()]
         TabMemory.LeftText = "REPLY"
         surface.SetDrawColor(COL_BG)
         surface.DrawRect(0, 48, 512, 48 + 4 + 4)
         local ply = cachedplayers[TabMemory.SelectedPlayer]
 
-        if !ply then
+        if not ply then
             TabPhone.EnterApp("messages")
-			return
+
+            return
         end
 
         local pfp = GetProfilePic(ply.ID)
@@ -578,48 +580,48 @@ TabPhone.Apps["messages_viewer"] = {
         draw.SimpleText(ply.Name, "TabPhone24", 8 + 48 + 8 + 4, 8 + 48 + 4, COL_FG)
         render.SetScissorRect(0, 104, w, h, true)
         local v_y = 512 - 40 - 8 - (TEXTTALL + 4) - 4 + TabMemory.MessageScroll
-		v_y = v_y + (TEXTTALL+8)
+        v_y = v_y + (TEXTTALL + 8)
         local history = GetMessageHistory(ply.ID)
 
         for i = 1, #history do
             local MsgData = history[#history - i + 1]
-			local msgsplit = TabPhone.SIL( MsgData.msg, 404-16-16, "TabPhone"..TEXTTALL )
-            surface.SetFont("TabPhone"..TEXTTALL)
+            local msgsplit = TabPhone.SIL(MsgData.msg, 404 - 16 - 16, "TabPhone" .. TEXTTALL)
+            surface.SetFont("TabPhone" .. TEXTTALL)
             surface.SetDrawColor(COL_BG)
-            v_y = v_y - ((TEXTTALL+8) * #msgsplit)
+            v_y = v_y - ((TEXTTALL + 8) * #msgsplit)
+            local backup = v_y
 
-			local backup = v_y
             for _, ts in ipairs(msgsplit) do
                 if backup > 0 and backup < h then
-                    if !MsgData.yours then continue end
-					surface.SetFont("TabPhone"..TEXTTALL)
-					local tsn = surface.GetTextSize(ts)
+                    if not MsgData.yours then continue end
+                    surface.SetFont("TabPhone" .. TEXTTALL)
+                    local tsn = surface.GetTextSize(ts)
+                    surface.SetDrawColor(COL_BG)
+                    surface.DrawRect(w - tsn - 8 - 8 - 8 - 2, backup - 2, tsn + 8 + 8 + 4, TEXTTALL + 4 + 4 + 4)
+                end
 
-					surface.SetDrawColor(COL_BG)
-					surface.DrawRect( w - tsn - 8 - 8 - 8 - (2), backup - (2), tsn + 8 + 8 + (4), TEXTTALL + 4 + 4 + (4) )
-				end
-                backup = backup + (TEXTTALL+8)
-			end
+                backup = backup + (TEXTTALL + 8)
+            end
 
             for _, ts in ipairs(msgsplit) do
                 if v_y > 0 and v_y < h then
-					surface.SetFont("TabPhone"..TEXTTALL)
-					local tsn = surface.GetTextSize(ts)
+                    surface.SetFont("TabPhone" .. TEXTTALL)
+                    local tsn = surface.GetTextSize(ts)
 
                     if MsgData.yours then
-						surface.SetDrawColor(COL_FG)
-						surface.DrawRect( w - tsn - 8 - 8 - 8, v_y, tsn + 8 + 8, TEXTTALL + 4 + 4 )
-                        draw.SimpleText(ts, "TabPhone"..TEXTTALL, w - 8 - 8, v_y+2, COL_BG, TEXT_ALIGN_RIGHT)
+                        surface.SetDrawColor(COL_FG)
+                        surface.DrawRect(w - tsn - 8 - 8 - 8, v_y, tsn + 8 + 8, TEXTTALL + 4 + 4)
+                        draw.SimpleText(ts, "TabPhone" .. TEXTTALL, w - 8 - 8, v_y + 2, COL_BG, TEXT_ALIGN_RIGHT)
                     else
-                        surface.DrawRect( 8, v_y, tsn + 16, TEXTTALL + 4 + 4 )
-                        draw.SimpleText(ts, "TabPhone"..TEXTTALL, 8 + 8, v_y+2, COL_FG, TEXT_ALIGN_LEFT)
+                        surface.DrawRect(8, v_y, tsn + 16, TEXTTALL + 4 + 4)
+                        draw.SimpleText(ts, "TabPhone" .. TEXTTALL, 8 + 8, v_y + 2, COL_FG, TEXT_ALIGN_LEFT)
                     end
                 end
 
-				v_y = v_y + (TEXTTALL+8)
+                v_y = v_y + (TEXTTALL + 8)
             end
 
-            v_y = v_y - ((TEXTTALL+8) * #msgsplit)
+            v_y = v_y - ((TEXTTALL + 8) * #msgsplit)
             v_y = v_y - 8
         end
 
@@ -695,18 +697,18 @@ TabPhone.Apps["dialer"] = {
 }
 
 local itemstobuy = {
-	{
-		["Name"] = "Washing Machine",
-	},
-	{
-		["Name"] = "Blood Cleaner",
-	},
-	{
-		["Name"] = "Automatic Weapons",
-	},
-	{
-		["Name"] = "Body Bags",
-	},
+    {
+        ["Name"] = "Washing Machine",
+    },
+    {
+        ["Name"] = "Blood Cleaner",
+    },
+    {
+        ["Name"] = "Automatic Weapons",
+    },
+    {
+        ["Name"] = "Body Bags",
+    },
 }
 
 TabPhone.Apps["shopping"] = {
@@ -721,21 +723,23 @@ TabPhone.Apps["shopping"] = {
     Func_Reload = function() end,
     Func_Scroll = function(level)
         TabPhone.Scroll(level, "Shopping_Selected", #itemstobuy)
-	end,
+    end,
     Func_Draw = function(w, h)
-		local sw, sh = 16, 48 + 16
-		for i, v in ipairs( itemstobuy ) do
-			local sel = (TabMemory.Shopping_Selected or 1) == i
-			draw.SimpleText(v.Name, "TabPhone24", sw, sh, COL_BG)
-			if sel then
-				draw.SimpleText(v.Name, "TabPhone24", sw+2, sh, COL_BG)
+        local sw, sh = 16, 48 + 16
 
-				surface.SetDrawColor( COL_BG )
-				surface.DrawRect( sw-4, sh+24+1, surface.GetTextSize( v.Name ) + 8+2, 3 )
-			end
-			sh = sh + 4 + 24
-		end
-	end,
+        for i, v in ipairs(itemstobuy) do
+            local sel = (TabMemory.Shopping_Selected or 1) == i
+            draw.SimpleText(v.Name, "TabPhone24", sw, sh, COL_BG)
+
+            if sel then
+                draw.SimpleText(v.Name, "TabPhone24", sw + 2, sh, COL_BG)
+                surface.SetDrawColor(COL_BG)
+                surface.DrawRect(sw - 4, sh + 24 + 1, surface.GetTextSize(v.Name) + 8 + 2, 3)
+            end
+
+            sh = sh + 4 + 24
+        end
+    end,
 }
 
 TabPhone.Apps["call"] = {
@@ -819,7 +823,6 @@ TabPhone.Apps["active_call"] = {
         TabMemory.RightText = "HANG UP"
         surface.SetDrawColor(COL_FG)
         surface.DrawRect(0, 0, 512, 512)
-
         local pfp
 
         if TabMemory.CallingPlayer then
@@ -1517,16 +1520,13 @@ TabPhone.Apps["gallery_deleter"] = {
     end,
 }
 
-local games_apps = {
-    "game_flappy"
-}
+local games_apps = {"game_flappy"}
 
 TabPhone.Apps["games"] = {
     Name = "Games",
     Icon = Material("fesiug/tabphone/games.png"),
     SortOrder = -79,
-    Func_Enter = function()
-    end,
+    Func_Enter = function() end,
     Func_Leave = function() end,
     Func_Primary = function()
         local Sortedapps = games_apps
@@ -1586,6 +1586,7 @@ TabPhone.Apps["games"] = {
             if icon then
                 surface.SetMaterial(icon)
             end
+
             surface.DrawTexturedRect(8 + 8 + 4 + 4, TotalScroll + ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
         end
 
@@ -1607,18 +1608,179 @@ TabPhone.Apps["games"] = {
     end,
 }
 
+local floopy_bgm_path = "fesiug/tabphone/ringtones/44khz/angrybirds.ogg"
+local floopy_bgm = nil
+local next_floopy_bgm = 0
+local floopy_score = 0
+local floopy_pipe = nil
+local floopy_x = 0
+local floopy_y = 256
+local floopy_dy = 0
+local floopy_dx = 300
+local floopy_x_offset = 60
+local floopy_state = "cutscene"
+local FLOOPY_HEIGHT = 32
+local FLOOPY_WIDTH = 32
+local mat_floopy = Material("fesiug/tabphone/pidge.png")
+local PIPE_WIDTH = 32
+local cutscene_text = TabPhone.SIL("In a world of pixels and dreams, Floopy Borb emerges as the unlikeliest of heroes. Armed with nothing but determination and surprisingly aerodynamic feathers, Floopy sets out on an epic journey through a perilous land of endless pipes. Will Floopy's flapping prowess be enough to overcome the challenges that lie ahead? The fate of the avian world hangs in the balance...", 380, "TabPhone24")
+local cutscene_progress = 0
+
+local function checkCollision(x, y, pipe_x, pipe_y, pipe_gap)
+    local x_collision = (x < pipe_x + PIPE_WIDTH) and (x + FLOOPY_WIDTH > pipe_x)
+    local y_collision_upper = y > pipe_y + pipe_gap
+    local y_collision_lower = y < pipe_y + FLOOPY_HEIGHT
+
+    return x_collision and (y_collision_upper or y_collision_lower)
+end
+
+local function drawTextWithBackground(text, font, x, y, textColor, bgColor, alignX, alignY)
+    surface.SetFont(font)
+    local textWidth, textHeight = surface.GetTextSize(text)
+    surface.SetDrawColor(bgColor)
+    local rx = x
+    local ry = y
+
+    if alignX == TEXT_ALIGN_CENTER then
+        rx = x - textWidth / 2
+    elseif alignX == TEXT_ALIGN_RIGHT then
+        rx = x - textWidth
+    end
+
+    if alignY == TEXT_ALIGN_CENTER then
+        ry = y - textHeight / 2
+    elseif alignY == TEXT_ALIGN_BOTTOM then
+        ry = y - textHeight
+    end
+
+    surface.DrawRect(rx, ry, textWidth, textHeight)
+    draw.SimpleText(text, font, x, y, textColor, alignX, alignY)
+end
+
 TabPhone.Apps["game_flappy"] = {
     Name = "Floopy Borb",
     Icon = Material("fesiug/tabphone/pidge.png"),
     Hidden = true,
     Func_Enter = function()
+        next_floopy_bgm = 0
+        floopy_state = "cutscene"
+        floopy_x = 0
+        floopy_y = 256
+        floopy_dy = 0
+        floopy_score = 0
+        floopy_pipe = nil
+        cutscene_progress = 0
+    end,
+    Func_Leave = function()
+        if floopy_bgm then
+            floopy_bgm:Stop()
+        end
     end,
     Func_Reload = function() end,
     Func_Primary = function()
+        if floopy_state == "cutscene" then
+            floopy_state = "start"
+        elseif floopy_state == "start" then
+            floopy_state = "game"
+        elseif floopy_state == "game" then
+            floopy_dy = 500
+        elseif floopy_state == "loss" then
+            -- Reset the game
+            floopy_state = "start"
+            floopy_x = 0
+            floopy_y = 256
+            floopy_dy = 0
+            floopy_score = 0
+            floopy_pipe = nil
+        end
     end,
     Func_Secondary = function()
         TabPhone.EnterApp("games")
     end,
     Func_Draw = function(w, h)
+        TabMemory.LeftText = "FLAP"
+
+        if next_floopy_bgm <= CurTime() then
+            if floopy_bgm then
+                floopy_bgm:Stop()
+            end
+
+            floopy_bgm = CreateSound(LocalPlayer(), floopy_bgm_path)
+            floopy_bgm:Play()
+            next_floopy_bgm = CurTime() + SoundDuration(floopy_bgm_path) - 1
+        end
+
+        if floopy_state == "cutscene" then
+            for i, line in ipairs(cutscene_text) do
+                draw.DrawText(line, "TabPhone24", w / 2, h - 100 - cutscene_progress + (i * 24), COL_BG, TEXT_ALIGN_CENTER)
+            end
+
+            cutscene_progress = cutscene_progress + 60 * RealFrameTime()
+
+            if cutscene_progress > (#cutscene_text * 24) + h then
+                floopy_state = "start"
+            end
+
+            TabMemory.LeftText = "SKIP"
+        else
+            -- Draw Floopy Borb
+            surface.SetDrawColor(COL_BG)
+            surface.SetMaterial(mat_floopy)
+            surface.DrawTexturedRect(floopy_x_offset, h - floopy_y, FLOOPY_WIDTH, FLOOPY_HEIGHT)
+
+            if not floopy_pipe then
+                floopy_pipe = {
+                    y = math.random(100, h - 100),
+                    x = floopy_x + w,
+                    gap = math.random(100, 200),
+                    passed = false
+                }
+            elseif floopy_pipe.x < floopy_x - 200 then
+                floopy_pipe = nil
+            else
+                -- Draw pipes
+                surface.SetDrawColor(COL_BG)
+                -- Lower pipe
+                surface.DrawRect(floopy_pipe.x - floopy_x + floopy_x_offset, h - floopy_pipe.y, PIPE_WIDTH, floopy_pipe.y)
+                -- Upper pipe
+                surface.DrawRect(floopy_pipe.x - floopy_x + floopy_x_offset, 0, PIPE_WIDTH, h - (floopy_pipe.y + floopy_pipe.gap))
+
+                -- Check collision
+                if checkCollision(floopy_x, floopy_y, floopy_pipe.x, floopy_pipe.y, floopy_pipe.gap) or floopy_y <= 0 then
+                    floopy_state = "loss"
+                end
+
+                -- Update score
+                if not floopy_pipe.passed and floopy_x > floopy_pipe.x then
+                    floopy_score = floopy_score + 1
+                    floopy_pipe.passed = true
+                end
+            end
+
+            if floopy_state == "start" then
+                draw.SimpleText("FLOOPY BORB", "TabPhone32", w / 2, 100, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+                if math.sin(CurTime() * 6) > 0 then
+                    draw.SimpleText("Press Left to Start", "TabPhone24", w / 2, 140, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                end
+            elseif floopy_state == "loss" then
+                drawTextWithBackground("弗露皮死亡", "TabPhone48", w / 2, 100, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                drawTextWithBackground("FLOOPY IS DEAD!!", "TabPhone32", w / 2, 160, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+                if math.sin(CurTime() * 6) > 0 then
+                    drawTextWithBackground("Play Again?", "TabPhone24", w / 2, 220, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                end
+
+                drawTextWithBackground("Score: " .. floopy_score, "TabPhone24", w / 2, 260, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            else
+                floopy_dy = math.Approach(floopy_dy, -400, RealFrameTime() * 800)
+                floopy_y = floopy_y + (floopy_dy * RealFrameTime())
+                floopy_y = math.Clamp(floopy_y, 0, h - FLOOPY_HEIGHT)
+                floopy_x = floopy_x + (floopy_dx * RealFrameTime())
+
+                -- Draw score
+                drawTextWithBackground("Score: " .. floopy_score, "TabPhone24", w - 12, 70, COL_FG, COL_BG, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+            end
+        end
     end,
 }
