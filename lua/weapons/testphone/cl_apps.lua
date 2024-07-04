@@ -1520,7 +1520,7 @@ TabPhone.Apps["gallery_deleter"] = {
     end,
 }
 
-local games_apps = {"game_flappy"}
+local games_apps = {"game_flappy", "game_snake"}
 
 TabPhone.Apps["games"] = {
     Name = "Games",
@@ -1608,7 +1608,7 @@ TabPhone.Apps["games"] = {
     end,
 }
 
-local floopy_bgm_path = "fesiug/tabphone/ringtones/44khz/angrybirds.ogg"
+local floopy_bgm_path = "arctic/bgm_1.ogg"
 local floopy_bgm = nil
 local next_floopy_bgm = 0
 local floopy_score = 0
@@ -1763,6 +1763,9 @@ TabPhone.Apps["game_flappy"] = {
                 if math.sin(CurTime() * 6) > 0 then
                     draw.SimpleText("Press Left to Start", "TabPhone24", w / 2, 140, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
                 end
+
+                TabMemory.LeftText = "START"
+                TabMemory.RightText = "QUIT"
             elseif floopy_state == "loss" then
                 drawTextWithBackground("弗露皮死亡", "TabPhone48", w / 2, 100, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
                 drawTextWithBackground("FLOOPY IS DEAD!!", "TabPhone32", w / 2, 160, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
@@ -1772,6 +1775,9 @@ TabPhone.Apps["game_flappy"] = {
                 end
 
                 drawTextWithBackground("Score: " .. floopy_score, "TabPhone24", w / 2, 260, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+                TabMemory.LeftText = "RESTART"
+                TabMemory.RightText = "QUIT"
             else
                 floopy_dy = math.Approach(floopy_dy, -400, RealFrameTime() * 800)
                 floopy_y = floopy_y + (floopy_dy * RealFrameTime())
@@ -1780,7 +1786,190 @@ TabPhone.Apps["game_flappy"] = {
 
                 -- Draw score
                 drawTextWithBackground("Score: " .. floopy_score, "TabPhone24", w - 12, 70, COL_FG, COL_BG, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+
+                TabMemory.LeftText = "FLAP"
+                TabMemory.RightText = "QUIT"
             end
+        end
+    end,
+}
+
+local snake_bgm_path = "fesiug/tabphone/ringtones/44khz/nokia.ogg"
+local snake_bgm = nil
+local next_snake_bgm = 0
+local snake_score = 0
+local snake_state = "start"
+local snake_body = {}
+local snake_direction = "right"
+local snake_food = {}
+local GRID_SIZE = 20
+local MOVE_DELAY = 0.1
+local last_move_time = 0
+
+local banner_offset = 70
+
+local function isPositionOccupied(x, y)
+    for _, segment in ipairs(snake_body) do
+        if segment.x == x and segment.y == y then
+            return true
+        end
+    end
+    return false
+end
+
+local function spawnFood()
+    local x, y
+    repeat
+        x = math.random(0, 19)
+        y = math.random(0, 19)
+    until not isPositionOccupied(x, y)
+    snake_food = {x = x, y = y}
+end
+
+local function initializeSnake()
+    snake_body = {{x = 5, y = 5}, {x = 4, y = 5}, {x = 3, y = 5}}
+    snake_direction = "right"
+    snake_score = 0
+    spawnFood()
+end
+
+local function moveSnake()
+    local head = snake_body[1]
+    local new_head = {x = head.x, y = head.y}
+
+    if snake_direction == "up" then
+        new_head.y = (new_head.y - 1 + 20) % 20
+    elseif snake_direction == "down" then
+        new_head.y = (new_head.y + 1) % 20
+    elseif snake_direction == "left" then
+        new_head.x = (new_head.x - 1 + 20) % 20
+    elseif snake_direction == "right" then
+        new_head.x = (new_head.x + 1) % 20
+    end
+
+    table.insert(snake_body, 1, new_head)
+
+    if new_head.x == snake_food.x and new_head.y == snake_food.y then
+        snake_score = snake_score + 1
+        spawnFood()
+    else
+        table.remove(snake_body)
+    end
+
+    -- Check for collision with self
+    for i = 2, #snake_body do
+        if new_head.x == snake_body[i].x and new_head.y == snake_body[i].y then
+            snake_state = "loss"
+            return
+        end
+    end
+end
+
+TabPhone.Apps["game_snake"] = {
+    Name = "Snekk",
+    Icon = Material("fesiug/tabphone/snake.png"),
+    Hidden = true,
+    Func_Enter = function()
+        next_snake_bgm = 0
+        snake_state = "start"
+        initializeSnake()
+    end,
+    Func_Leave = function()
+        if snake_bgm then
+            snake_bgm:Stop()
+        end
+    end,
+    Func_Reload = function()
+        TabPhone.EnterApp("games")
+    end,
+    Func_Primary = function()
+        if snake_state == "start" then
+            snake_state = "game"
+        elseif snake_state == "game" then
+            if snake_direction == "up" then
+                snake_direction = "left"
+            elseif snake_direction == "left" then
+                snake_direction = "down"
+            elseif snake_direction == "down" then
+                snake_direction = "right"
+            else
+                snake_direction = "up"
+            end
+        elseif snake_state == "loss" then
+            snake_state = "start"
+            initializeSnake()
+        end
+    end,
+    Func_Secondary = function()
+        if snake_state == "game" then
+            if snake_direction == "up" then
+                snake_direction = "right"
+            elseif snake_direction == "left" then
+                snake_direction = "up"
+            elseif snake_direction == "down" then
+                snake_direction = "left"
+            else
+                snake_direction = "down"
+            end
+        else
+            TabPhone.EnterApp("games")
+        end
+    end,
+    Func_Draw = function(w, h)
+        if next_snake_bgm <= CurTime() then
+            if snake_bgm then
+                snake_bgm:Stop()
+            end
+
+            snake_bgm = CreateSound(LocalPlayer(), snake_bgm_path)
+            snake_bgm:Play()
+            next_snake_bgm = CurTime() + SoundDuration(snake_bgm_path) - 1
+        end
+
+        -- Draw game area
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(0, 0, w, h)
+
+        if snake_state == "start" then
+            draw.SimpleText("SNAKE", "TabPhone32", w / 2, 100, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+            if math.sin(CurTime() * 6) > 0 then
+                draw.SimpleText("Press Left to Start", "TabPhone24", w / 2, 140, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
+
+            TabMemory.LeftText = "START"
+        elseif snake_state == "game" then
+            -- Move snake
+            if CurTime() - last_move_time > MOVE_DELAY then
+                moveSnake()
+                last_move_time = CurTime()
+            end
+
+            -- Draw snake
+            surface.SetDrawColor(COL_FG)
+            for _, segment in ipairs(snake_body) do
+                surface.DrawRect(segment.x * GRID_SIZE, banner_offset + segment.y * GRID_SIZE, GRID_SIZE - 1, GRID_SIZE - 1)
+            end
+
+            -- Draw food
+            surface.SetDrawColor(COL_FG)
+            surface.DrawRect(snake_food.x * GRID_SIZE, banner_offset + snake_food.y * GRID_SIZE, GRID_SIZE - 1, GRID_SIZE - 1)
+
+            -- Draw score
+            drawTextWithBackground("Score: " .. snake_score, "TabPhone24", w - 12, 12, COL_FG, COL_BG, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+
+            TabMemory.LeftText = "TURN"
+            TabMemory.RightText = "TURN"
+        elseif snake_state == "loss" then
+            drawTextWithBackground("GAME OVER", "TabPhone48", w / 2, 100, COL_FG, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            drawTextWithBackground("Score: " .. snake_score, "TabPhone32", w / 2, 160, COL_FG, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+            if math.sin(CurTime() * 6) > 0 then
+                drawTextWithBackground("Play Again?", "TabPhone24", w / 2, 220, COL_FG, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
+
+            TabMemory.LeftText = "RESTART"
+            TabMemory.RightText = "QUIT"
         end
     end,
 }
