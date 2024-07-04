@@ -781,9 +781,7 @@ TabPhone.Apps["shopping_cats"] = {
         local item = shop_items[TabMemory.ShoppingItem_Selected or 1]
         local itemtype = cat.type
 
-        PrintTable(item)
-
-        if itemtype == "shipment" then
+        if itemtype == "shipments" then
             RunConsoleCommand("DarkRP", "buyshipment", item.name)
         elseif itemtype == "entities" then
             RunConsoleCommand("DarkRP", item.cmd)
