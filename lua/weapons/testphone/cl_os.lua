@@ -55,7 +55,8 @@ TabMemory = TabMemory or {
     MessageScroll = 0,
     Has_Unread = false,
     TotalGameScroll = 0,
-    HighScores = {}
+    HighScores = {},
+    ShoppingItem_Selected = 1,
 }
 
 function TabPhone.EnterApp(name)

@@ -707,17 +707,25 @@ TabPhone.Apps["shopping"] = {
 
         for i, k in pairs(DarkRP.getCategories()) do
             if i == "jobs" then continue end
-            for _, cat in pairs(k) do
+            for j, cat in pairs(k) do
                 if table.Count(cat.members) == 0 then continue end
+
+                if cat.canSee then
+                    if not cat.canSee(LocalPlayer()) then continue end
+                end
 
                 table.insert(shop_categories, {
                     type = i,
                     name = cat.name,
+                    index = j
                 })
             end
         end
     end,
-    Func_Primary = function() end,
+    Func_Primary = function()
+        TabMemory.ShoppingItem_Selected = 1
+        TabPhone.EnterApp("shopping_cats")
+    end,
     Func_Secondary = function()
         TabPhone.EnterApp("mainmenu")
     end,
@@ -726,7 +734,12 @@ TabPhone.Apps["shopping"] = {
         TabPhone.Scroll(level, "Shopping_Selected", #shop_categories)
     end,
     Func_Draw = function(w, h)
-        local sw, sh = 16, 48 + 16
+        local sw, sh = 16, 148
+
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(0, 0, w, 124)
+        draw.SimpleText("JAMESLIST", "TabPhone32", w / 2, 60, COL_FG, TEXT_ALIGN_CENTER)
+        draw.SimpleText("Premium Online Marketplace", "TabPhone16", w / 2, 100, COL_FG, TEXT_ALIGN_CENTER)
 
         for i, v in ipairs(shop_categories) do
             local sel = (TabMemory.Shopping_Selected or 1) == i
@@ -736,6 +749,75 @@ TabPhone.Apps["shopping"] = {
                 draw.SimpleText(v.name, "TabPhone24", sw + 2, sh, COL_BG)
                 surface.SetDrawColor(COL_BG)
                 surface.DrawRect(sw - 4, sh + 24 + 1, surface.GetTextSize(v.name) + 8 + 2, 3)
+            end
+
+            sh = sh + 4 + 24
+        end
+    end,
+}
+
+local shop_items = {}
+
+TabPhone.Apps["shopping_cats"] = {
+    Hidden = true,
+    Func_Enter = function()
+        local cat = shop_categories[TabMemory.Shopping_Selected or 1]
+        shop_items = {}
+
+        for _, item in pairs(DarkRP.getCategories()[cat.type][cat.index].members) do
+            if item.allowed then
+                if istable(item.allowed) and not table.HasValue(item.allowed, LocalPlayer():Team()) then
+                    continue
+                elseif not istable(item.allowed) and item.allowed != LocalPlayer():Team() then
+                    continue
+                end
+            end
+
+            table.insert(shop_items, item)
+        end
+    end,
+    Func_Primary = function()
+        local cat = shop_categories[TabMemory.Shopping_Selected or 1]
+        local item = shop_items[TabMemory.ShoppingItem_Selected or 1]
+        local itemtype = cat.type
+
+        PrintTable(item)
+
+        if itemtype == "shipment" then
+            RunConsoleCommand("DarkRP", "buyshipment", item.name)
+        elseif itemtype == "entities" then
+            RunConsoleCommand("DarkRP", item.cmd)
+        end
+    end,
+    Func_Secondary = function()
+        TabPhone.EnterApp("shopping")
+    end,
+    Func_Reload = function() end,
+    Func_Scroll = function(level)
+        TabPhone.Scroll(level, "ShoppingItem_Selected", #shop_items)
+    end,
+    Func_Draw = function(w, h)
+        local sw, sh = 16, 148
+
+        local cat = shop_categories[TabMemory.Shopping_Selected or 1]
+
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(0, 0, w, 124)
+        draw.SimpleText("JAMESLIST", "TabPhone32", w / 2, 60, COL_FG, TEXT_ALIGN_CENTER)
+        draw.SimpleText(cat.name, "TabPhone16", w / 2, 100, COL_FG, TEXT_ALIGN_CENTER)
+
+        TabMemory.LeftText = ""
+
+        for i, v in ipairs(shop_items) do
+            local sel = (TabMemory.ShoppingItem_Selected or 1) == i
+            draw.SimpleText(v.name, "TabPhone24", sw, sh, COL_BG)
+
+            if sel then
+                draw.SimpleText(v.name, "TabPhone24", sw + 2, sh, COL_BG)
+                surface.SetDrawColor(COL_BG)
+                surface.DrawRect(sw - 4, sh + 24 + 1, surface.GetTextSize(v.name) + 8 + 2, 3)
+
+                TabMemory.LeftText = "BUY (" .. DarkRP.formatMoney(v.price) .. ")"
             end
 
             sh = sh + 4 + 24
