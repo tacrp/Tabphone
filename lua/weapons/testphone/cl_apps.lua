@@ -1623,7 +1623,7 @@ local FLOOPY_HEIGHT = 32
 local FLOOPY_WIDTH = 32
 local mat_floopy = Material("fesiug/tabphone/pidge.png")
 local PIPE_WIDTH = 32
-local cutscene_text = TabPhone.SIL("In a world of pixels and dreams, Floopy Borb emerges as the unlikeliest of heroes. Armed with nothing but determination and surprisingly aerodynamic feathers, Floopy sets out on an epic journey through a perilous land of endless pipes. Will Floopy's flapping prowess be enough to overcome the challenges that lie ahead? The fate of the avian world hangs in the balance...", 380, "TabPhone24")
+local cutscene_text = TabPhone.SIL("The year 2009 has arrived. A herd of fucking retarded gamers. are rushing from the mainland. RDM rate skyrockeded! DarkRP is ruined! Therefore, the Administrators called Garry Newman's relatve \"Floopy\" for the massacre of the children. Floopy is a killer machine. Wipe out all 27.35 million of the minge bags! However, in Steam Community there was a secret project in progress! A project to transform the deceased Joe In Lye into an ultimate weapon!", 380, "TabPhone24")
 local cutscene_progress = 0
 
 local function checkCollision(x, y, pipe_x, pipe_y, pipe_gap)
