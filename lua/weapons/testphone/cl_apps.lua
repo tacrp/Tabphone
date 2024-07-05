@@ -629,11 +629,23 @@ TabPhone.Apps["messages_viewer"] = {
     end,
 }
 
+local jobs = {}
+
 TabPhone.Apps["jobs"] = {
     Name = "Jobs",
     Icon = Material("fesiug/tabphone/job.png"),
     SortOrder = -117,
-    Func_Enter = function() end,
+    Func_Enter = function()
+        jobs = {}
+
+        for i, k in pairs(DarkRP.getCategories().jobs) do
+            for index, job in ipairs(k.members) do
+                PrintTable(job)
+
+                table.insert(jobs, job)
+            end
+        end
+    end,
     Func_Primary = function()
         TabPhone.PlayNotiftone()
     end,
@@ -707,6 +719,7 @@ TabPhone.Apps["shopping"] = {
 
         for i, k in pairs(DarkRP.getCategories()) do
             if i == "jobs" then continue end
+
             for j, cat in pairs(k) do
                 if table.Count(cat.members) == 0 then continue end
 
@@ -735,7 +748,6 @@ TabPhone.Apps["shopping"] = {
     end,
     Func_Draw = function(w, h)
         local sw, sh = 16, 148
-
         surface.SetDrawColor(COL_BG)
         surface.DrawRect(0, 0, w, 124)
         draw.SimpleText("JAMESLIST", "TabPhone32", w / 2, 60, COL_FG, TEXT_ALIGN_CENTER)
@@ -768,7 +780,7 @@ TabPhone.Apps["shopping_cats"] = {
             if item.allowed then
                 if istable(item.allowed) and not table.HasValue(item.allowed, LocalPlayer():Team()) then
                     continue
-                elseif not istable(item.allowed) and item.allowed != LocalPlayer():Team() then
+                elseif not istable(item.allowed) and item.allowed ~= LocalPlayer():Team() then
                     continue
                 end
             end
@@ -796,14 +808,11 @@ TabPhone.Apps["shopping_cats"] = {
     end,
     Func_Draw = function(w, h)
         local sw, sh = 16, 148
-
         local cat = shop_categories[TabMemory.Shopping_Selected or 1]
-
         surface.SetDrawColor(COL_BG)
         surface.DrawRect(0, 0, w, 124)
         draw.SimpleText("JAMESLIST", "TabPhone32", w / 2, 60, COL_FG, TEXT_ALIGN_CENTER)
         draw.SimpleText(cat.name, "TabPhone16", w / 2, 100, COL_FG, TEXT_ALIGN_CENTER)
-
         TabMemory.LeftText = ""
 
         for i, v in ipairs(shop_items) do
@@ -814,7 +823,6 @@ TabPhone.Apps["shopping_cats"] = {
                 draw.SimpleText(v.name, "TabPhone24", sw + 2, sh, COL_BG)
                 surface.SetDrawColor(COL_BG)
                 surface.DrawRect(sw - 4, sh + 24 + 1, surface.GetTextSize(v.name) + 8 + 2, 3)
-
                 TabMemory.LeftText = "BUY (" .. DarkRP.formatMoney(v.price) .. ")"
             end
 
@@ -1873,7 +1881,6 @@ TabPhone.Apps["game_flappy"] = {
 
                 if floopy_hiscore then
                     drawTextWithBackground("NEW HIGH SCORE!!!", "TabPhone24", w / 2, 290, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-
                 end
 
                 TabMemory.LeftText = "RESTART"
@@ -1883,10 +1890,8 @@ TabPhone.Apps["game_flappy"] = {
                 floopy_y = floopy_y + (floopy_dy * RealFrameTime())
                 floopy_y = math.Clamp(floopy_y, 0, h - FLOOPY_HEIGHT)
                 floopy_x = floopy_x + (floopy_dx * RealFrameTime())
-
                 -- Draw score
                 drawTextWithBackground("Score: " .. floopy_score, "TabPhone24", w - 12, 70, COL_FG, COL_BG, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
-
                 TabMemory.LeftText = "FLAP"
                 TabMemory.RightText = "QUIT"
             end
@@ -1905,15 +1910,13 @@ local snake_food = {}
 local GRID_SIZE = 20
 local MOVE_DELAY = 0.1
 local last_move_time = 0
-
 local banner_offset = 70
 
 local function isPositionOccupied(x, y)
     for _, segment in ipairs(snake_body) do
-        if segment.x == x and segment.y == y then
-            return true
-        end
+        if segment.x == x and segment.y == y then return true end
     end
+
     return false
 end
 
@@ -1923,11 +1926,29 @@ local function spawnFood()
         x = math.random(0, 19)
         y = math.random(0, 19)
     until not isPositionOccupied(x, y)
-    snake_food = {x = x, y = y}
+
+    snake_food = {
+        x = x,
+        y = y
+    }
 end
 
 local function initializeSnake()
-    snake_body = {{x = 5, y = 5}, {x = 4, y = 5}, {x = 3, y = 5}}
+    snake_body = {
+        {
+            x = 5,
+            y = 5
+        },
+        {
+            x = 4,
+            y = 5
+        },
+        {
+            x = 3,
+            y = 5
+        }
+    }
+
     snake_direction = "right"
     snake_score = 0
     spawnFood()
@@ -1935,7 +1956,11 @@ end
 
 local function moveSnake()
     local head = snake_body[1]
-    local new_head = {x = head.x, y = head.y}
+
+    local new_head = {
+        x = head.x,
+        y = head.y
+    }
 
     if snake_direction == "up" then
         new_head.y = (new_head.y - 1 + 20) % 20
@@ -1960,6 +1985,7 @@ local function moveSnake()
     for i = 2, #snake_body do
         if new_head.x == snake_body[i].x and new_head.y == snake_body[i].y then
             snake_state = "loss"
+
             return
         end
     end
@@ -2038,7 +2064,6 @@ TabPhone.Apps["game_snake"] = {
             end
 
             draw.SimpleText("Press R to quit game", "TabPhone24", w / 2, 450, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-
             TabMemory.LeftText = "START"
         elseif snake_state == "game" then
             -- Move snake
@@ -2049,6 +2074,7 @@ TabPhone.Apps["game_snake"] = {
 
             -- Draw snake
             surface.SetDrawColor(COL_FG)
+
             for _, segment in ipairs(snake_body) do
                 surface.DrawRect(segment.x * GRID_SIZE, banner_offset + segment.y * GRID_SIZE, GRID_SIZE - 1, GRID_SIZE - 1)
             end
@@ -2056,10 +2082,8 @@ TabPhone.Apps["game_snake"] = {
             -- Draw food
             surface.SetDrawColor(COL_FG)
             surface.DrawRect(snake_food.x * GRID_SIZE, banner_offset + snake_food.y * GRID_SIZE, GRID_SIZE - 1, GRID_SIZE - 1)
-
             -- Draw score
             drawTextWithBackground("Score: " .. snake_score, "TabPhone24", w - 12, 12, COL_FG, COL_BG, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
-
             TabMemory.LeftText = "TURN"
             TabMemory.RightText = "TURN"
         elseif snake_state == "loss" then
