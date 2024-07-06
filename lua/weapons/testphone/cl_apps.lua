@@ -653,9 +653,27 @@ TabPhone.Apps["jobs"] = {
         TabPhone.EnterApp("mainmenu")
     end,
     Func_Reload = function() end,
+    Func_Scroll = function(level)
+        TabPhone.Scroll(level, "Job_Selected", #shop_categories)
+    end,
     Func_Draw = function(w, h)
-        for i = 0, 10 do
-            draw.SimpleText("WORK IN PROGRESS", "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + (i * (32 + 4)), COL_BG, TEXT_ALIGN_CENTER)
+        local sw, sh = 16, 148
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(0, 0, w, 124)
+        draw.SimpleText("JAMESLIST", "TabPhone32", w / 2, 60, COL_FG, TEXT_ALIGN_CENTER)
+        draw.SimpleText("Premium Online Marketplace", "TabPhone16", w / 2, 100, COL_FG, TEXT_ALIGN_CENTER)
+
+        for i, v in ipairs(shop_categories) do
+            local sel = (TabMemory.Shopping_Selected or 1) == i
+            draw.SimpleText(v.name, "TabPhone24", sw, sh, COL_BG)
+
+            if sel then
+                draw.SimpleText(v.name, "TabPhone24", sw + 2, sh, COL_BG)
+                surface.SetDrawColor(COL_BG)
+                surface.DrawRect(sw - 4, sh + 24 + 1, surface.GetTextSize(v.name) + 8 + 2, 3)
+            end
+
+            sh = sh + 4 + 24
         end
     end,
 }
