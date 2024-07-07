@@ -631,6 +631,29 @@ TabPhone.Apps["messages_viewer"] = {
 
 local jobs = {}
 
+local function canGetJob(job)
+    local ply = LocalPlayer()
+
+    if isnumber(job.NeedToChangeFrom) and ply:Team() ~= job.NeedToChangeFrom then return false, true end
+    if istable(job.NeedToChangeFrom) and not table.HasValue(job.NeedToChangeFrom, ply:Team()) then return false, true end
+    if job.customCheck and not job.customCheck(ply) then return false, true end
+    if ply:Team() == job.team then return false, true end
+    local numPlayers = team.NumPlayers(job.team)
+    if job.max ~= 0 and ((job.max % 1 == 0 and numPlayers >= job.max) or (job.max % 1 ~= 0 and (numPlayers + 1) / player.GetCount() > job.max)) then return false, false end
+    if job.admin == 1 and not ply:IsAdmin() then return false, true end
+    if job.admin > 1 and not ply:IsSuperAdmin() then return false, true end
+
+
+    return true
+end
+
+local function getMaxOfTeam(job)
+    if not job.max or job.max == 0 then return "∞" end
+    if job.max % 1 == 0 then return tostring(job.max) end
+
+    return tostring(math.floor(job.max * player.GetCount()))
+end
+
 TabPhone.Apps["jobs"] = {
     Name = "Jobs",
     Icon = Material("fesiug/tabphone/job.png"),
@@ -640,40 +663,129 @@ TabPhone.Apps["jobs"] = {
 
         for i, k in pairs(DarkRP.getCategories().jobs) do
             for index, job in ipairs(k.members) do
-                PrintTable(job)
-
+                if not canGetJob(job) then continue end
                 table.insert(jobs, job)
             end
         end
     end,
     Func_Primary = function()
-        TabPhone.PlayNotiftone()
+        TabPhone.EnterApp("jobs_viewer")
     end,
     Func_Secondary = function()
         TabPhone.EnterApp("mainmenu")
     end,
     Func_Reload = function() end,
     Func_Scroll = function(level)
-        TabPhone.Scroll(level, "Job_Selected", #shop_categories)
+        TabPhone.Scroll(level, "Job_Selected", #jobs)
     end,
     Func_Draw = function(w, h)
-        local sw, sh = 16, 148
-        surface.SetDrawColor(COL_BG)
-        surface.DrawRect(0, 0, w, 124)
-        draw.SimpleText("JAMESLIST", "TabPhone32", w / 2, 60, COL_FG, TEXT_ALIGN_CENTER)
-        draw.SimpleText("Premium Online Marketplace", "TabPhone16", w / 2, 100, COL_FG, TEXT_ALIGN_CENTER)
+        local longestscroll = 0
+        local TotalScroll = TabMemory.TotalJobScroll or 0
 
-        for i, v in ipairs(shop_categories) do
-            local sel = (TabMemory.Shopping_Selected or 1) == i
-            draw.SimpleText(v.name, "TabPhone24", sw, sh, COL_BG)
+        for i, prev in ipairs(jobs) do
+            local sel = i == TabMemory.Job_Selected
+            local Sy = ((i - 1) * 28) + 148
+
+            if Sy > (512 - 48 - 40) then
+                longestscroll = math.max(-((512 - 148 - 40) - Sy), longestscroll)
+            end
 
             if sel then
-                draw.SimpleText(v.name, "TabPhone24", sw + 2, sh, COL_BG)
+                if (Sy + TotalScroll) > (512 - 48 - 40) then
+                    TotalScroll = (512 - 148 - 40) - Sy
+                elseif (Sy + TotalScroll) <= 148 then
+                    TotalScroll = 148 - Sy
+                end
+            end
+        end
+
+        TabMemory.TotalJobScroll = TotalScroll
+        -- App logic
+        local sw, sh = 16, 148 + TotalScroll
+
+        for i, job in ipairs(jobs) do
+            local sel = (TabMemory.Job_Selected or 1) == i
+            local jobname = job.name
+
+            jobname = jobname .. " (" .. team.NumPlayers(job.team) .. "/" .. getMaxOfTeam(job) .. ")"
+
+            draw.SimpleText(jobname, "TabPhone24", sw, sh, COL_BG)
+
+            if sel then
+                draw.SimpleText(jobname, "TabPhone24", sw + 2, sh, COL_BG)
                 surface.SetDrawColor(COL_BG)
-                surface.DrawRect(sw - 4, sh + 24 + 1, surface.GetTextSize(v.name) + 8 + 2, 3)
+                surface.DrawRect(sw - 4, sh + 24 + 1, surface.GetTextSize(jobname) + 8 + 2, 3)
+                sel_sy = sh
             end
 
             sh = sh + 4 + 24
+        end
+
+        local fulllength = 512 - 48 - 40 - 8 - 8
+        local annoyingmath = (512 - 48 - 40 - 8) / ((512 - 48 - 40 - 8) - longestscroll)
+        local length = fulllength / annoyingmath
+        local s_per
+
+        if longestscroll <= 0 then
+            s_per = 0
+        else
+            s_per = (-TotalScroll) / longestscroll
+        end
+
+        local endpos = ((48 + 8) + (512 - 48 - 40 - 8 - 4) * s_per) - length * s_per
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(BARRIER_FLIPPHONE - 12, endpos, 6, length)
+
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(0, 0, w, 124)
+        draw.SimpleText("JOBSLIST", "TabPhone32", w / 2, 60, COL_FG, TEXT_ALIGN_CENTER)
+        draw.SimpleText("Premium Online Employment", "TabPhone16", w / 2, 100, COL_FG, TEXT_ALIGN_CENTER)
+    end,
+}
+
+local job_lines = {}
+
+TabPhone.Apps["jobs_viewer"] = {
+    Name = "Job Viewer",
+    Hidden = true,
+    Func_Enter = function()
+        local job = jobs[TabMemory.Job_Selected]
+
+        job_lines = {}
+
+        table.insert(job_lines, job.name)
+        table.insert(job_lines, "SALARY: " .. DarkRP.formatMoney(job.salary))
+        table.insert(job_lines, "")
+
+        table.Add(job_lines, TabPhone.SIL(job.description, 380, "TabPhone24"))
+
+        TabMemory.JobViewerScroll = 1
+    end,
+    Func_Primary = function()
+        local job = jobs[TabMemory.Job_Selected]
+
+        if (job.RequiresVote == nil and job.vote) or (job.RequiresVote ~= nil and job.RequiresVote(LocalPlayer(), job.team)) then
+            RunConsoleCommand("darkrp", "vote" .. job.command)
+        else
+            RunConsoleCommand("darkrp", job.command)
+        end
+    end,
+    Func_Secondary = function()
+        TabPhone.EnterApp("jobs")
+    end,
+    Func_Scroll = function(level)
+        TabPhone.Scroll(level, "JobViewerScroll", math.max(1, #job_lines - 13), true)
+    end,
+    Func_Reload = function() end,
+    Func_Draw = function(w, h)
+        local sw, sh = 16, 64 + 28 - (TabMemory.JobViewerScroll * 28)
+
+        TabMemory.LeftText = "APPLY"
+
+        for _, line in ipairs(job_lines) do
+            draw.SimpleText(line, "TabPhone24", sw + 2, sh, COL_BG)
+
+            sh = sh + 28
         end
     end,
 }
@@ -1733,8 +1845,9 @@ local FLOOPY_HEIGHT = 32
 local FLOOPY_WIDTH = 32
 local mat_floopy = Material("fesiug/tabphone/pidge.png")
 local PIPE_WIDTH = 32
-local cutscene_text = TabPhone.SIL("The year 2009 has arrived. A herd of fucking retarded gamers. are rushing from the mainland. RDM rate skyrockeded! DarkRP is ruined! Therefore, the Administrators called Garry Newman's relatve \"Floopy\" for the massacre of the children. Floopy is a killer machine. Wipe out all 27.35 million of the minge bags! However, in Steam Community there was a secret project in progress! A project to transform the deceased Joe In Lye into an ultimate weapon!", 380, "TabPhone24")
+local cutscene_text = "The year 2009 has arrived. A herd of fucking retarded gamers. are rushing from the mainland. RDM rate skyrockeded! DarkRP is ruined! Therefore, the Administrators called Garry Newman's relatve \"Floopy\" for the massacre of the children. Floopy is a killer machine. Wipe out all 27.35 million of the minge bags! However, in Steam Community there was a secret project in progress! A project to transform the deceased Joe In Lye into an ultimate weapon!"
 local cutscene_progress = 0
+local cutscene_text_sil = {}
 
 local function checkCollision(x, y, pipe_x, pipe_y, pipe_gap)
     local x_collision = (x < pipe_x + PIPE_WIDTH) and (x + FLOOPY_WIDTH > pipe_x)
@@ -1781,6 +1894,7 @@ TabPhone.Apps["game_flappy"] = {
         floopy_pipe = nil
         floopy_hiscore = false
         cutscene_progress = 0
+        cutscene_text_sil = TabPhone.SIL(cutscene_text, 380, "TabPhone24")
     end,
     Func_Leave = function()
         if floopy_bgm then
@@ -1823,7 +1937,7 @@ TabPhone.Apps["game_flappy"] = {
         end
 
         if floopy_state == "cutscene" then
-            for i, line in ipairs(cutscene_text) do
+            for i, line in ipairs(cutscene_text_sil) do
                 draw.DrawText(line, "TabPhone24", w / 2, h - 100 - cutscene_progress + (i * 24), COL_BG, TEXT_ALIGN_CENTER)
             end
 

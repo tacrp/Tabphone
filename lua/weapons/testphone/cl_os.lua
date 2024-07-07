@@ -82,7 +82,7 @@ function TabPhone.EnterApp(name)
     end
 end
 
-function TabPhone.Scroll(level, var, total)
+function TabPhone.Scroll(level, var, total, nowrap)
     if not TabMemory[var] then
         TabMemory[var] = 1
     end
@@ -90,10 +90,14 @@ function TabPhone.Scroll(level, var, total)
     TabMemory[var] = TabMemory[var] + level
     local Appcount = total
 
-    if TabMemory[var] <= 0 then
-        TabMemory[var] = Appcount
-    elseif TabMemory[var] > Appcount then
-        TabMemory[var] = 1
+    if nowrap then
+        TabMemory[var] = math.Clamp(TabMemory[var], 1, total)
+    else
+        if TabMemory[var] <= 0 then
+            TabMemory[var] = Appcount
+        elseif TabMemory[var] > Appcount then
+            TabMemory[var] = 1
+        end
     end
 end
 
