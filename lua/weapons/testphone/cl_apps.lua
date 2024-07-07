@@ -2077,6 +2077,7 @@ local snake_bgm_path = "fesiug/tabphone/ringtones/44khz/nokia.ogg"
 local snake_bgm = nil
 local next_snake_bgm = 0
 local snake_score = 0
+local snake_hiscore = false
 local snake_state = "start"
 local snake_body = {}
 local snake_direction = "right"
@@ -2160,6 +2161,11 @@ local function moveSnake()
         if new_head.x == snake_body[i].x and new_head.y == snake_body[i].y then
             snake_state = "loss"
 
+            if snake_score > (TabMemory.HighScores.Snake or 0) then
+                TabMemory.HighScores.Snake = snake_score
+                snake_hiscore = true
+            end
+
             return
         end
     end
@@ -2172,6 +2178,7 @@ TabPhone.Apps["game_snake"] = {
     Func_Enter = function()
         next_snake_bgm = 0
         snake_state = "start"
+        snake_hiscore = false
         initializeSnake()
     end,
     Func_Leave = function()
@@ -2237,6 +2244,10 @@ TabPhone.Apps["game_snake"] = {
                 draw.SimpleText("Press Left to Start", "TabPhone24", w / 2, 140, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             end
 
+            if TabMemory.HighScores.Snake then
+                draw.SimpleText("High Score: " .. TabMemory.HighScores.Snake, "TabPhone24", w / 2, 180, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
+
             draw.SimpleText("Press R to quit game", "TabPhone24", w / 2, 450, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             TabMemory.LeftText = "START"
         elseif snake_state == "game" then
@@ -2263,6 +2274,10 @@ TabPhone.Apps["game_snake"] = {
         elseif snake_state == "loss" then
             drawTextWithBackground("GAME OVER", "TabPhone48", w / 2, 100, COL_FG, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             drawTextWithBackground("Score: " .. snake_score, "TabPhone32", w / 2, 160, COL_FG, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+            if snake_hiscore then
+                drawTextWithBackground("New High Score!", "TabPhone24", w / 2, 280, COL_FG, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
 
             if math.sin(CurTime() * 6) > 0 then
                 drawTextWithBackground("Play Again?", "TabPhone24", w / 2, 220, COL_FG, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
