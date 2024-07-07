@@ -1244,32 +1244,58 @@ TabPhone.Apps["settings"] = {
     end,
     Func_Reload = function() end,
     Func_Draw = function(w, h)
+        TabMemory.TotalSettingsScroll = TabMemory.TotalSettingsScroll or 0
+
+        -- Scroll math
+        local longestscroll = 0
+
+        for i, prev in ipairs(settings_options) do
+            local sel = i == TabMemory.SelectedSetting
+            local Sy = ((i - 1) * (48 + 8)) + 48 + 8
+
+            if Sy > (512 - 48 - 40) then
+                longestscroll = math.max(-((512 - 48 - 40 - 8) - Sy), longestscroll)
+            end
+
+            if sel then
+                if (Sy + TabMemory.TotalSettingsScroll) > (512 - 48 - 40) then
+                    TabMemory.TotalSettingsScroll = (512 - 48 - 40 - 8) - Sy
+                elseif (Sy + TabMemory.TotalSettingsScroll) <= (48 + 8) then
+                    TabMemory.TotalSettingsScroll = (48 + 8) - Sy
+                end
+            end
+        end
+
+        local TotalSettingsScroll = TabMemory.TotalSettingsScroll
+
         for i, opt in ipairs(settings_options) do
             local sel = i == TabMemory.SelectedSetting
             surface.SetDrawColor(COL_BG)
 
+            local sy = ((i - 1) * (48 + 8)) + 48 + 8 + TotalSettingsScroll
+
             if sel then
-                surface.DrawRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52)
+                surface.DrawRect(8, sy, BARRIER_FLIPPHONE - 24, 52)
 
                 if opt.type == "int" then
                     TabMemory.LeftText = "NEXT"
                     TabMemory.RightText = "PREVIOUS"
                 end
             else
-                surface.DrawOutlinedRect(8, ((i - 1) * (48 + 8)) + 48 + 8, BARRIER_FLIPPHONE - 8 - 8, 52, 4)
+                surface.DrawOutlinedRect(8, sy, BARRIER_FLIPPHONE - 24, 52, 4)
             end
 
-            draw.SimpleText(opt.label, "TabPhone32", 8 + 8 + 8 + 8 + 8 + 32, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG)
+            draw.SimpleText(opt.label, "TabPhone32", 8 + 8 + 8 + 8 + 8 + 32, sy + 8, sel and COL_FG or COL_BG)
 
             if opt.icon then
                 surface.SetDrawColor(sel and COL_FG or COL_BG)
                 surface.SetMaterial(opt.icon)
-                surface.DrawTexturedRect(8 + 8 + 4 + 4, ((i - 1) * (48 + 8)) + 48 + 8 + 8 + 2, 32, 32)
+                surface.DrawTexturedRect(8 + 8 + 4 + 4, sy + 8 + 2, 32, 32)
             end
 
             if opt.type == "int" then
                 local val = opt.convar:GetInt()
-                draw.SimpleText(tostring(val), "TabPhone32", w - 8 - 8 - 4 - 4, ((i - 1) * (48 + 8)) + 48 + 8 + 8, sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
+                draw.SimpleText(tostring(val), "TabPhone32", w - 8 - 8 - 4 - 4, sy + 8, sel and COL_FG or COL_BG, TEXT_ALIGN_RIGHT)
             elseif opt.type == "bool" then
                 local val = opt.convar:GetBool()
 
@@ -1280,9 +1306,25 @@ TabPhone.Apps["settings"] = {
                 end
 
                 surface.SetDrawColor(sel and COL_FG or COL_BG)
-                surface.DrawTexturedRect(w - 32 - 24, ((i - 1) * (48 + 8)) + 64 + 2, 32, 32)
+                surface.DrawTexturedRect(w - 32 - 24, sy + 10, 32, 32)
             end
         end
+
+        -- Scroll logic
+        local fulllength = 512 - 48 - 40 - 8 - 8
+        local annoyingmath = (512 - 48 - 40 - 8) / ((512 - 48 - 40 - 8) - longestscroll)
+        local length = fulllength / annoyingmath
+        local s_per
+
+        if longestscroll <= 0 then
+            s_per = 0
+        else
+            s_per = (-TotalSettingsScroll) / longestscroll
+        end
+
+        local endpos = ((48 + 8) + (512 - 48 - 40 - 8 - 4) * s_per) - length * s_per
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(BARRIER_FLIPPHONE - 12, endpos, 6, length)
     end,
 }
 
