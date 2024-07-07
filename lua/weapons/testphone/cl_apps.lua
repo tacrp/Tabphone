@@ -1087,7 +1087,7 @@ TabPhone.Apps["active_call"] = {
             pfp = TabMemory.CallingContact.Name
         end
 
-        local tsn = surface.GetTextSize(" " .. nick .. " ")
+        tsn = surface.GetTextSize(" " .. nick .. " ")
         surface.DrawRect((BARRIER_FLIPPHONE / 2) - tsn / 2, 64 + 16, tsn, 32 + 4 + 4)
         draw.SimpleText(nick, "TabPhone32", BARRIER_FLIPPHONE / 2, 64 + 16, COL_BG, TEXT_ALIGN_CENTER)
     end,
@@ -1787,7 +1787,9 @@ TabPhone.Apps["games"] = {
     Name = "Games",
     Icon = Material("fesiug/tabphone/games.png"),
     SortOrder = -79,
-    Func_Enter = function() end,
+    Func_Enter = function()
+        TabPhone.LoadHighScores()
+    end,
     Func_Leave = function() end,
     Func_Primary = function()
         local Sortedapps = games_apps
@@ -2020,6 +2022,8 @@ TabPhone.Apps["game_flappy"] = {
                     if (TabMemory.HighScores["floopy"] or 0) < floopy_score then
                         TabMemory.HighScores["floopy"] = floopy_score
                         floopy_hiscore = true
+
+                        TabPhone.SaveHighScores()
                     end
                 end
 
@@ -2164,6 +2168,8 @@ local function moveSnake()
             if snake_score > (TabMemory.HighScores.Snake or 0) then
                 TabMemory.HighScores.Snake = snake_score
                 snake_hiscore = true
+
+                TabPhone.SaveHighScores()
             end
 
             return

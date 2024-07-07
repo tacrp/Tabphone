@@ -59,6 +59,19 @@ TabMemory = TabMemory or {
     ShoppingItem_Selected = 1,
 }
 
+local scoredatafile = "tabphone_hiscores.dat"
+
+function TabPhone.SaveHighScores()
+    local json = util.TableToJSON(TabMemory.HighScores)
+    file.Write(scoredatafile, json)
+end
+
+function TabPhone.LoadHighScores()
+    if not file.Exists(scoredatafile, "DATA") then return end
+    local content = file.Read(scoredatafile, "DATA")
+    TabMemory.HighScores = util.JSONToTable(content)
+end
+
 function TabPhone.EnterApp(name)
     local from = TabMemory.ActiveApp
     TabMemory.LastApp = from
