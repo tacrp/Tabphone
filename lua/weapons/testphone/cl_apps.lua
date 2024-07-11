@@ -937,12 +937,33 @@ TabPhone.Apps["shopping_cats"] = {
         TabPhone.Scroll(level, "ShoppingItem_Selected", #shop_items)
     end,
     Func_Draw = function(w, h)
-        local sw, sh = 16, 148
+
+        local longestscroll = 0
+        local TotalScroll = TabMemory.TotalShoppingScroll or 0
+
+        for i, prev in ipairs(shop_items) do
+            local sel = i == TabMemory.ShoppingItem_Selected
+            local Sy = ((i - 1) * 28) + 148
+
+            if Sy > (512 - 48 - 40) then
+                longestscroll = math.max(-((512 - 148 - 40) - Sy), longestscroll)
+            end
+
+            if sel then
+                if (Sy + TotalScroll) > (512 - 48 - 40) then
+                    TotalScroll = (512 - 148 - 40) - Sy
+                elseif (Sy + TotalScroll) <= 148 then
+                    TotalScroll = 148 - Sy
+                end
+            end
+        end
+
+        TabMemory.TotalShoppingScroll = TotalScroll
+
+        -- App logic
+        local sw, sh = 16, 148 + TotalScroll
         local cat = shop_categories[TabMemory.Shopping_Selected or 1]
-        surface.SetDrawColor(COL_BG)
-        surface.DrawRect(0, 0, w, 124)
-        draw.SimpleText("JAMESLIST", "TabPhone32", w / 2, 60, COL_FG, TEXT_ALIGN_CENTER)
-        draw.SimpleText(cat.name, "TabPhone16", w / 2, 100, COL_FG, TEXT_ALIGN_CENTER)
+
         TabMemory.LeftText = ""
 
         for i, v in ipairs(shop_items) do
@@ -958,6 +979,26 @@ TabPhone.Apps["shopping_cats"] = {
 
             sh = sh + 4 + 24
         end
+
+        local fulllength = 512 - 48 - 40 - 8 - 8
+        local annoyingmath = (512 - 48 - 40 - 8) / ((512 - 48 - 40 - 8) - longestscroll)
+        local length = fulllength / annoyingmath
+        local s_per
+
+        if longestscroll <= 0 then
+            s_per = 0
+        else
+            s_per = (-TotalScroll) / longestscroll
+        end
+
+        local endpos = ((48 + 8) + (512 - 48 - 40 - 8 - 4) * s_per) - length * s_per
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(BARRIER_FLIPPHONE - 12, endpos, 6, length)
+
+        surface.SetDrawColor(COL_BG)
+        surface.DrawRect(0, 0, w, 124)
+        draw.SimpleText("JAMESLIST", "TabPhone32", w / 2, 60, COL_FG, TEXT_ALIGN_CENTER)
+        draw.SimpleText(cat.name, "TabPhone16", w / 2, 100, COL_FG, TEXT_ALIGN_CENTER)
     end,
 }
 

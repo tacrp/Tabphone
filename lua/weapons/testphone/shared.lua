@@ -2,6 +2,7 @@ SWEP.Base = "weapon_base"
 SWEP.Spawnable = true
 SWEP.ViewModel = "models/fesiug/TabPhone_2.mdl"
 SWEP.ViewModelFOV = 44
+SWEP.WorldModel = "models/weapons/w_camphone.mdl"
 SWEP.PrintName = "TabPhone"
 SWEP.BobScale = 0.1
 SWEP.SwayScale = 0.1
@@ -110,6 +111,7 @@ end
 function SWEP:Deploy()
 	self:QuickAnim("open")
 	self:EmitSound("fesiug/tabphone/draw.ogg", 60, 100, 1)
+	self:SetHoldType("slam")
 
 	if CLIENT and IsFirstTimePredicted() then
 		if not TabMemory.ActiveApp then
