@@ -1930,7 +1930,7 @@ local FLOOPY_HEIGHT = 32
 local FLOOPY_WIDTH = 32
 local mat_floopy = Material("fesiug/tabphone/pidge.png")
 local PIPE_WIDTH = 32
-local cutscene_text = "The year 2009 has arrived. A herd of fucking retarded gamers. are rushing from the mainland. RDM rate skyrockeded! DarkRP is ruined! Therefore, the Administrators called Garry Newman's relatve \"Floopy\" for the massacre of the children. Floopy is a killer machine. Wipe out all 27.35 million of the minge bags! However, in Steam Community there was a secret project in progress! A project to transform the deceased Joe In Lye into an ultimate weapon!"
+local cutscene_text = "The year 2009 has arrived.\nA herd of fucking retarded gamers. are rushing from the mainland.\nRDM rate skyrockeded! DarkRP is ruined!\n\nTherefore, the Administrators called Garry Newman's relatve \"Floopy\" for the massacre of the children.\n\nFloopy is a killer machine.\nWipe out all 27.35 million of the minge bags!\n\nHowever, in Steam Community there was a secret project in progress!\n\nA project to transform the deceased Joe In Lye into an ultimate weapon!"
 local cutscene_progress = 0
 local cutscene_text_sil = {}
 
@@ -1965,6 +1965,14 @@ local function drawTextWithBackground(text, font, x, y, textColor, bgColor, alig
     draw.SimpleText(text, font, x, y, textColor, alignX, alignY)
 end
 
+local floopy_fadein = 0
+local floopy_img_cutscene1 = Material("fesiug/tabphone/game_floopy/cutscene1.png")
+local floopy_img_cutscene2 = Material("fesiug/tabphone/game_floopy/cutscene2.png")
+local floopy_img_cutscene3 = Material("fesiug/tabphone/game_floopy/cutscene3.png")
+local floopy_img_cutscene4 = Material("fesiug/tabphone/game_floopy/cutscene4.png")
+local floopy_img_failure = Material("fesiug/tabphone/game_floopy/failure.png")
+local woink = 0
+
 TabPhone.Apps["game_flappy"] = {
     Name = "Floopy Borb",
     Icon = Material("fesiug/tabphone/pidge.png"),
@@ -1979,7 +1987,7 @@ TabPhone.Apps["game_flappy"] = {
         floopy_pipe = nil
         floopy_hiscore = false
         cutscene_progress = 0
-        cutscene_text_sil = TabPhone.SIL(cutscene_text, 380, "TabPhone24")
+        cutscene_text_sil = TabPhone.SIL(cutscene_text, 404-8-8, "TabPhone24")
     end,
     Func_Leave = function()
         if floopy_bgm then
@@ -2017,23 +2025,87 @@ TabPhone.Apps["game_flappy"] = {
             end
 
             floopy_bgm = CreateSound(LocalPlayer(), floopy_bgm_path)
-            floopy_bgm:Play()
+            floopy_bgm:PlayEx( 0.4*TabPhone.GetVolume(), 100 )
             next_floopy_bgm = CurTime() + floopy_bgm_duration
         end
 
         if floopy_state == "cutscene" then
+			surface.SetDrawColor(COL_BG)
+			surface.DrawRect( 0, 0, w, h )
+
+            cutscene_progress = cutscene_progress + (24*2) * FrameTime()
+			local cutscene_per = cutscene_progress/( (#cutscene_text_sil * 24) + (h-48) )
+			
+			do -- cutscene logic
+				local fadeaway = true
+				local mat = floopy_img_cutscene1
+
+				if cutscene_per > 0.9 then
+					-- fade breen
+					fadeaway = true
+					mat = floopy_img_cutscene3
+				elseif cutscene_per > 0.7 then
+					-- show breen
+					fadeaway = false
+					mat = floopy_img_cutscene3
+				elseif cutscene_per > 0.6 then
+					-- fade tunnel
+					fadeaway = true
+					mat = floopy_img_cutscene2
+				elseif cutscene_per > 0.5 then
+					-- show tunnel
+					fadeaway = false
+					mat = floopy_img_cutscene2
+				elseif cutscene_per > 0.4 then
+					-- fade prick
+					fadeaway = true
+					mat = floopy_img_cutscene1
+				elseif cutscene_per > 0.3 then
+					-- show prick
+					fadeaway = false
+					mat = floopy_img_cutscene1
+				elseif cutscene_per > 0.2 then
+					-- fade mingebag
+					fadeaway = true
+					mat = floopy_img_cutscene4
+				elseif cutscene_per > 0.1 then
+					-- show mingebag
+					fadeaway = false
+					mat = floopy_img_cutscene4
+				elseif cutscene_per > 0 then
+					-- first, blank
+					woink = 0
+					fadeaway = true
+					mat = floopy_img_cutscene4
+				end
+
+				woink = math.Approach(woink, fadeaway and 0 or 1, FrameTime()/0.5)
+				local woink = math.Round(woink*4)/4
+
+				local CutsceneCol = ColorAlpha(COL_FG, woink*255)
+				surface.SetDrawColor(CutsceneCol)
+				surface.SetMaterial(mat)
+				surface.DrawTexturedRect( 0, h/2 - w/2, w, w )
+			end
+
             for i, line in ipairs(cutscene_text_sil) do
-                draw.DrawText(line, "TabPhone24", w / 2, h - 100 - cutscene_progress + (i * 24), COL_BG, TEXT_ALIGN_CENTER)
+                draw.DrawText(line, "TabPhone24", 8 + 2, h + 2 - 40 - cutscene_progress + (i * 24), COL_BG, TEXT_ALIGN_LEFT)
+                draw.DrawText(line, "TabPhone24", 8 + 0, h + 2 - 40 - cutscene_progress + (i * 24), COL_BG, TEXT_ALIGN_LEFT)
+                draw.DrawText(line, "TabPhone24", 8 + 0, h + 4 - 40 - cutscene_progress + (i * 24), COL_BG, TEXT_ALIGN_LEFT)
+                draw.DrawText(line, "TabPhone24", 8, h - 40 - cutscene_progress + (i * 24), COL_FG, TEXT_ALIGN_LEFT)
             end
 
-            cutscene_progress = cutscene_progress + 60 * RealFrameTime()
-
-            if cutscene_progress > (#cutscene_text * 24) + h then
+            if cutscene_per >= 1 then
                 floopy_state = "start"
             end
 
             TabMemory.LeftText = "SKIP"
+			floopy_fadein = 1
         else
+			surface.SetDrawColor(COL_BG)
+			surface.DrawRect( 0, 0, w, (h/2)*floopy_fadein )
+			surface.DrawRect( 0, (h/2)+((h/2)*(1-floopy_fadein)), w, (h/2)*floopy_fadein )
+			floopy_fadein = math.Approach(floopy_fadein, 0, FrameTime()/1)
             -- Draw Floopy Borb
             surface.SetDrawColor(COL_BG)
             surface.SetMaterial(mat_floopy)
@@ -2086,15 +2158,28 @@ TabPhone.Apps["game_flappy"] = {
                     draw.SimpleText("TOP SCORE: " .. TabMemory.HighScores["floopy"], "TabPhone24", w / 2, 180, COL_BG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
                 end
 
+				floopy_recentlydied = false
+
                 TabMemory.LeftText = "START"
                 TabMemory.RightText = "QUIT"
             elseif floopy_state == "loss" then
-                drawTextWithBackground("弗露皮死亡", "TabPhone48", w / 2, 100, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-                drawTextWithBackground("FLOOPY IS DEAD!!", "TabPhone32", w / 2, 160, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+				surface.SetDrawColor(COL_BG)
+				surface.SetMaterial(floopy_img_failure)
+				surface.DrawTexturedRect( 0, h/2 - w/2, w, w )
 
-                if math.sin(CurTime() * 6) > 0 then
-                    drawTextWithBackground("Play Again?", "TabPhone24", w / 2, 220, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-                end
+				local jiggy = (math.Round(math.sin(UnPredictedCurTime() * 2 * math.pi) * 2, 0) / 2) * 16
+				local jiggy2 = math.Round(math.sin(UnPredictedCurTime() * 28 * math.pi), 0) * 4
+                drawTextWithBackground("弗露皮死亡", "TabPhone48", w / 2 + jiggy, 100 + jiggy2, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+				local jiggy = (math.Round(math.sin((UnPredictedCurTime()+0.3) * 2 * math.pi) * 2, 0) / 2) * 16
+				local jiggy2 = math.Round(math.sin((UnPredictedCurTime()+0.3) * 28 * math.pi), 0) * 4
+                drawTextWithBackground("FLOOPY IS DEAD!!", "TabPhone32", w / 2 + jiggy, 160 + jiggy2, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+                --if math.sin(CurTime() * 6) > 0 then
+					local jiggy = (math.Round(math.sin((UnPredictedCurTime()+0.6) * 2 * math.pi) * 2, 0) / 2) * 16
+					local jiggy2 = math.Round(math.sin((UnPredictedCurTime()+0.6) * 28 * math.pi), 0) * 4
+                    drawTextWithBackground("Play Again?", "TabPhone24", w / 2 + jiggy, 220 + jiggy2, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                --end
 
                 drawTextWithBackground("Score: " .. floopy_score, "TabPhone24", w / 2, 260, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
@@ -2102,23 +2187,29 @@ TabPhone.Apps["game_flappy"] = {
                     drawTextWithBackground("NEW HIGH SCORE!!!", "TabPhone24", w / 2, 290, COL_BG, COL_FG, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
                 end
 
+				if !floopy_recentlydied then
+					LocalPlayer():EmitSound("fesiug/tabphone/floopy/failure-0" .. math.random(1, 7) .. ".ogg", 70, 100, 0.5 * TabPhone.GetVolume(), CHAN_STATIC)
+				end
+				floopy_recentlydied = true
+
                 TabMemory.LeftText = "RESTART"
                 TabMemory.RightText = "QUIT"
             else
-                floopy_dy = math.Approach(floopy_dy, -400, RealFrameTime() * 800)
+				floopy_fadein = 0
+				floopy_dy = math.Approach(floopy_dy, -400, RealFrameTime() * 800)
                 floopy_y = floopy_y + (floopy_dy * RealFrameTime())
                 floopy_y = math.Clamp(floopy_y, 0, h - FLOOPY_HEIGHT)
                 floopy_x = floopy_x + (floopy_dx * RealFrameTime())
                 -- Draw score
                 drawTextWithBackground("Score: " .. floopy_score, "TabPhone24", w - 12, 70, COL_FG, COL_BG, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
                 TabMemory.LeftText = "FLAP"
-                TabMemory.RightText = "QUIT"
+                TabMemory.RightText = "SURRENDER"
             end
         end
     end,
 }
 
-local snake_bgm_path = "fesiug/tabphone/ringtones/44khz/nokia.ogg"
+local snake_bgm_path = "fesiug/tabphone/ringtones/44khz/arab.ogg"
 local snake_bgm = nil
 local next_snake_bgm = 0
 local snake_score = 0
@@ -2128,7 +2219,7 @@ local snake_body = {}
 local snake_direction = "right"
 local snake_food = {}
 local GRID_SIZE = 20
-local MOVE_DELAY = 0.1
+local MOVE_DELAY = 0.2
 local last_move_time = 0
 local banner_offset = 70
 
